@@ -45,7 +45,7 @@ This file is the source of truth for build progress. Keep it up to date.
 
 ### Milestone 1.1 — Foundation (Weeks 1–2)
 
-- [ ] Initialise Next.js project with TypeScript strict mode, App Router, and `@/` path alias
+- [x] Initialise Next.js project with TypeScript strict mode, App Router, and `@/` path alias
 - [ ] Configure Biome for linting + formatting; add `npm run lint` script
 - [ ] Add Vitest for unit tests; add `npm test` script
 - [ ] Add Playwright for E2E tests; add `npm run e2e` script
