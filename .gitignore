@@ -31,7 +31,7 @@ yarn-error.log*
 next-env.d.ts
 
 # drizzle
-/drizzle/meta/
+# Note: drizzle/meta/ must be tracked — drizzle-kit needs snapshots for incremental migrations
 
 # playwright
 /test-results/
