@@ -47,7 +47,7 @@ This file is the source of truth for build progress. Keep it up to date.
 
 - [x] Initialise Next.js project with TypeScript strict mode, App Router, and `@/` path alias
 - [x] Configure Biome for linting + formatting; add `npm run lint` script
-- [ ] Add Vitest for unit tests; add `npm test` script
+- [x] Add Vitest for unit tests; add `npm test` script
 - [ ] Add Playwright for E2E tests; add `npm run e2e` script
 - [ ] Set up CI pipeline (GitHub Actions) running lint → test → e2e on every PR
 - [ ] Define Drizzle schema: `users`, `items`, `locations`, `capture_sessions` tables in `src/server/db/schema.ts`
