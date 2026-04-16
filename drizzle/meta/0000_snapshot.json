@@ -54,12 +54,8 @@
           "name": "capture_sessions_user_id_users_id_fk",
           "tableFrom": "capture_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -164,12 +160,8 @@
           "name": "items_user_id_users_id_fk",
           "tableFrom": "items",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -177,12 +169,8 @@
           "name": "items_location_id_locations_id_fk",
           "tableFrom": "items",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -190,12 +178,8 @@
           "name": "items_capture_session_id_capture_sessions_id_fk",
           "tableFrom": "items",
           "tableTo": "capture_sessions",
-          "columnsFrom": [
-            "capture_session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["capture_session_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -276,12 +260,8 @@
           "name": "locations_user_id_users_id_fk",
           "tableFrom": "locations",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -349,9 +329,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -363,14 +341,7 @@
     "public.item_status": {
       "name": "item_status",
       "schema": "public",
-      "values": [
-        "inbox",
-        "kept",
-        "sell",
-        "donate",
-        "sold",
-        "donated"
-      ]
+      "values": ["inbox", "kept", "sell", "donate", "sold", "donated"]
     }
   },
   "schemas": {},
