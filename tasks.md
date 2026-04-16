@@ -51,7 +51,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Add Playwright for E2E tests; add `npm run e2e` script
 - [x] Set up CI pipeline (GitHub Actions) running lint → test → e2e on every PR
 - [x] Define Drizzle schema: `users`, `items`, `locations`, `capture_sessions` tables in `src/server/db/schema.ts`
-- [ ] Run initial `drizzle-kit generate` + `drizzle-kit migrate` against Neon Postgres
+- [x] Run initial `drizzle-kit generate` + `drizzle-kit migrate` against Neon Postgres
 - [ ] Wire tRPC root router at `src/server/routers/index.ts`; mount as Next.js API route
 - [ ] Configure Auth.js v5 with magic link email provider (Resend)
 - [ ] Add Google OAuth provider to Auth.js
