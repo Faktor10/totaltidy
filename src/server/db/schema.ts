@@ -36,7 +36,7 @@ export const users = pgTable("users", {
     .$onUpdate(() => new Date()),
 });
 
-// ── Accounts (Auth.js OAuth) ──────────────────────────────────────────────
+// ── Accounts (Auth.js) ────────────────────────────────────────────────────
 
 export const accounts = pgTable(
   "accounts",
@@ -55,10 +55,20 @@ export const accounts = pgTable(
     id_token: text("id_token"),
     session_state: text("session_state"),
   },
-  (account) => [primaryKey({ columns: [account.provider, account.providerAccountId] })],
+  (t) => [primaryKey({ columns: [t.provider, t.providerAccountId] })],
 );
 
-// ── Verification Tokens (Auth.js magic link) ─────────────────────────────
+// ── Sessions (Auth.js) ───────────────────────────────────────────────────
+
+export const sessions = pgTable("sessions", {
+  sessionToken: text("session_token").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date", withTimezone: true }).notNull(),
+});
+
+// ── Verification Tokens (Auth.js magic links) ────────────────────────────
 
 export const verificationTokens = pgTable(
   "verification_tokens",
@@ -67,7 +77,7 @@ export const verificationTokens = pgTable(
     token: text("token").notNull(),
     expires: timestamp("expires", { mode: "date", withTimezone: true }).notNull(),
   },
-  (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })],
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
 // ── Locations ──────────────────────────────────────────────────────────────
@@ -130,14 +140,19 @@ export const items = pgTable("items", {
 // ── Relations ──────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
   items: many(items),
   locations: many(locations),
   captureSessions: many(captureSessions),
-  accounts: many(accounts),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, { fields: [accounts.userId], references: [users.id] }),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
 
 export const locationsRelations = relations(locations, ({ one, many }) => ({
@@ -164,6 +179,15 @@ export const itemsRelations = relations(items, ({ one }) => ({
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
+export type Account = typeof accounts.$inferSelect;
+export type NewAccount = typeof accounts.$inferInsert;
+
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+
+export type VerificationToken = typeof verificationTokens.$inferSelect;
+export type NewVerificationToken = typeof verificationTokens.$inferInsert;
+
 export type Item = typeof items.$inferSelect;
 export type NewItem = typeof items.$inferInsert;
 
@@ -172,9 +196,3 @@ export type NewLocation = typeof locations.$inferInsert;
 
 export type CaptureSession = typeof captureSessions.$inferSelect;
 export type NewCaptureSession = typeof captureSessions.$inferInsert;
-
-export type Account = typeof accounts.$inferSelect;
-export type NewAccount = typeof accounts.$inferInsert;
-
-export type VerificationToken = typeof verificationTokens.$inferSelect;
-export type NewVerificationToken = typeof verificationTokens.$inferInsert;
