@@ -1,18 +1,27 @@
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import {
+  type Account,
+  accounts,
   type CaptureSession,
   captureSessions,
   type Item,
   items,
   type Location,
   locations,
+  type NewAccount,
   type NewCaptureSession,
   type NewItem,
   type NewLocation,
+  type NewSession,
   type NewUser,
+  type NewVerificationToken,
+  type Session,
+  sessions,
   type User,
   users,
+  type VerificationToken,
+  verificationTokens,
 } from "./schema";
 
 describe("users table", () => {
@@ -56,6 +65,138 @@ describe("users table", () => {
 
     const newUser: NewUser = { email: "new@test.com" };
     expect(newUser.email).toBe("new@test.com");
+  });
+});
+
+describe("accounts table", () => {
+  it("has the correct table name", () => {
+    expect(getTableName(accounts)).toBe("accounts");
+  });
+
+  it("has all expected columns", () => {
+    const columns = getTableColumns(accounts);
+    const columnNames = Object.keys(columns);
+    expect(columnNames).toContain("userId");
+    expect(columnNames).toContain("type");
+    expect(columnNames).toContain("provider");
+    expect(columnNames).toContain("providerAccountId");
+    expect(columnNames).toContain("refresh_token");
+    expect(columnNames).toContain("access_token");
+    expect(columnNames).toContain("expires_at");
+    expect(columnNames).toContain("token_type");
+    expect(columnNames).toContain("scope");
+    expect(columnNames).toContain("id_token");
+    expect(columnNames).toContain("session_state");
+  });
+
+  it("has userId as non-nullable", () => {
+    const columns = getTableColumns(accounts);
+    expect(columns.userId.notNull).toBe(true);
+  });
+
+  it("has type and provider as non-nullable", () => {
+    const columns = getTableColumns(accounts);
+    expect(columns.type.notNull).toBe(true);
+    expect(columns.provider.notNull).toBe(true);
+  });
+
+  it("exports correct inferred types", () => {
+    const account: Account = {
+      userId: "user-uuid",
+      type: "email",
+      provider: "resend",
+      providerAccountId: "test@test.com",
+      refresh_token: null,
+      access_token: null,
+      expires_at: null,
+      token_type: null,
+      scope: null,
+      id_token: null,
+      session_state: null,
+    };
+    expect(account.provider).toBe("resend");
+
+    const newAccount: NewAccount = {
+      userId: "user-uuid",
+      type: "email",
+      provider: "resend",
+      providerAccountId: "test@test.com",
+    };
+    expect(newAccount.type).toBe("email");
+  });
+});
+
+describe("sessions table", () => {
+  it("has the correct table name", () => {
+    expect(getTableName(sessions)).toBe("sessions");
+  });
+
+  it("has all expected columns", () => {
+    const columns = getTableColumns(sessions);
+    const columnNames = Object.keys(columns);
+    expect(columnNames).toContain("sessionToken");
+    expect(columnNames).toContain("userId");
+    expect(columnNames).toContain("expires");
+  });
+
+  it("has all columns as non-nullable", () => {
+    const columns = getTableColumns(sessions);
+    expect(columns.sessionToken.notNull).toBe(true);
+    expect(columns.userId.notNull).toBe(true);
+    expect(columns.expires.notNull).toBe(true);
+  });
+
+  it("exports correct inferred types", () => {
+    const session: Session = {
+      sessionToken: "token-abc",
+      userId: "user-uuid",
+      expires: new Date(),
+    };
+    expect(session.sessionToken).toBe("token-abc");
+
+    const newSession: NewSession = {
+      sessionToken: "token-abc",
+      userId: "user-uuid",
+      expires: new Date(),
+    };
+    expect(newSession.userId).toBe("user-uuid");
+  });
+});
+
+describe("verification_tokens table", () => {
+  it("has the correct table name", () => {
+    expect(getTableName(verificationTokens)).toBe("verification_tokens");
+  });
+
+  it("has all expected columns", () => {
+    const columns = getTableColumns(verificationTokens);
+    const columnNames = Object.keys(columns);
+    expect(columnNames).toContain("identifier");
+    expect(columnNames).toContain("token");
+    expect(columnNames).toContain("expires");
+  });
+
+  it("has all columns as non-nullable", () => {
+    const columns = getTableColumns(verificationTokens);
+    expect(columns.identifier.notNull).toBe(true);
+    expect(columns.token.notNull).toBe(true);
+    expect(columns.expires.notNull).toBe(true);
+  });
+
+  it("exports correct inferred types", () => {
+    const vt: VerificationToken = {
+      identifier: "test@test.com",
+      token: "magic-link-token",
+      expires: new Date(),
+    };
+    expect(vt.identifier).toBe("test@test.com");
+
+    const newVt: NewVerificationToken = {
+      identifier: "test@test.com",
+      token: "magic-link-token",
+      expires: new Date(),
+    };
+    expect(newVt.token).toBe("magic-link-token");
   });
 });
 
