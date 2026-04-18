@@ -13,6 +13,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     verificationTokensTable: verificationTokens,
   }),
   providers: [
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
     Resend({
       from: process.env.AUTH_EMAIL_FROM ?? "TotalTidy <noreply@totaltidy.com>",
     }),
