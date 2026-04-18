@@ -55,7 +55,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Wire tRPC root router at `src/server/routers/index.ts`; mount as Next.js API route
 - [x] Configure Auth.js v5 with magic link email provider (Resend)
 - [x] Add Google OAuth provider to Auth.js
-- [ ] Protect all tRPC mutations with `protectedProcedure` middleware
+- [x] Protect all tRPC mutations with `protectedProcedure` middleware
 - [ ] Add all required environment variables to `.env.example` (DATABASE_URL, NEXTAUTH_SECRET, Cloudinary keys, etc.)
 - [ ] Create Cloudinary unsigned upload preset scoped to `totaltidy/` folder
 - [ ] Scaffold Cloudinary webhook handler at `app/api/webhooks/cloudinary/route.ts` with signature verification
