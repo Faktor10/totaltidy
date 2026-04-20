@@ -1,11 +1,15 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { Session } from "next-auth";
 import superjson from "superjson";
+import { auth } from "@/lib/auth";
 
-export function createTRPCContext(opts: { headers: Headers; session: Session | null }) {
+export async function createTRPCContext(opts: { headers: Headers }) {
+  const session = await auth();
+
   return {
     headers: opts.headers,
-    session: opts.session,
+    session,
+    userId: session?.user?.id ?? null,
   };
 }
 
@@ -25,6 +29,7 @@ const enforceAuth = t.middleware(({ ctx, next }) => {
   return next({
     ctx: {
       session: ctx.session as Session & { user: { id: string } },
+      userId: ctx.session.user.id,
     },
   });
 });
