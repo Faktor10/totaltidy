@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth", () => ({
