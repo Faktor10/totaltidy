@@ -57,10 +57,10 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Add Google OAuth provider to Auth.js
 - [x] Protect all tRPC mutations with `protectedProcedure` middleware
 - [x] Add all required environment variables to `.env.example` (DATABASE_URL, NEXTAUTH_SECRET, Cloudinary keys, etc.)
-- [ ] Create Cloudinary unsigned upload preset scoped to `totaltidy/` folder
-- [ ] Scaffold Cloudinary webhook handler at `app/api/webhooks/cloudinary/route.ts` with signature verification
-- [ ] Write Vitest unit tests for auth middleware and Drizzle query helpers
-- [ ] Write Playwright E2E test: unauthenticated user is redirected to sign-in page
+- [x] Create Cloudinary unsigned upload preset scoped to `totaltidy/` folder
+- [x] Scaffold Cloudinary webhook handler at `app/api/webhooks/cloudinary/route.ts` with signature verification
+- [x] Write Vitest unit tests for auth middleware and Drizzle query helpers
+- [x] Write Playwright E2E test: unauthenticated user is redirected to sign-in page
 - [ ] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.1 PR**
 
 ---
