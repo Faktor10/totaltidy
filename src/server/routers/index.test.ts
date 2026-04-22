@@ -19,7 +19,7 @@ describe("appRouter", () => {
   });
 
   it("protectedProcedure throws UNAUTHORIZED when no session", async () => {
-    const caller = createCaller({ headers: new Headers(), session: null });
+    const caller = createCaller({ headers: new Headers(), session: null, userId: null });
     await expect(caller.me()).rejects.toThrow(TRPCError);
     await expect(caller.me()).rejects.toMatchObject({
       code: "UNAUTHORIZED",
@@ -30,6 +30,7 @@ describe("appRouter", () => {
     const caller = createCaller({
       headers: new Headers(),
       session: { user: {}, expires: "" } as never,
+      userId: null,
     });
     await expect(caller.me()).rejects.toMatchObject({
       code: "UNAUTHORIZED",
@@ -43,6 +44,7 @@ describe("appRouter", () => {
         user: { id: "user-123", email: "test@example.com" },
         expires: new Date(Date.now() + 86400000).toISOString(),
       },
+      userId: "user-123",
     });
     const result = await caller.me();
     expect(result).toEqual({ userId: "user-123" });
