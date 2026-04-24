@@ -248,4 +248,80 @@ describe("useCamera", () => {
 
     expect(mockStop).toHaveBeenCalled();
   });
+
+  it("discards stale stream when stopCamera is called during getUserMedia", async () => {
+    const staleStop = vi.fn();
+    const staleStream = {
+      getTracks: () => [{ stop: staleStop, kind: "video" }],
+    } as unknown as MediaStream;
+
+    let resolveGetUserMedia: ((stream: MediaStream) => void) | undefined;
+    mockGetUserMedia.mockReturnValue(
+      new Promise<MediaStream>((resolve) => {
+        resolveGetUserMedia = resolve;
+      }),
+    );
+
+    const { result } = renderHook(() => useCamera());
+    result.current.videoRef.current = mockVideoElement();
+
+    let startPromise: Promise<void> | undefined;
+    act(() => {
+      startPromise = result.current.startCamera();
+    });
+
+    act(() => {
+      result.current.stopCamera();
+    });
+
+    await act(async () => {
+      resolveGetUserMedia?.(staleStream);
+      await startPromise;
+    });
+
+    expect(staleStop).toHaveBeenCalled();
+    expect(result.current.isReady).toBe(false);
+  });
+
+  it("stops stream when videoRef.current is null after getUserMedia resolves", async () => {
+    const orphanStop = vi.fn();
+    const orphanStream = {
+      getTracks: () => [{ stop: orphanStop, kind: "video" }],
+    } as unknown as MediaStream;
+    mockGetUserMedia.mockResolvedValue(orphanStream);
+
+    const { result } = renderHook(() => useCamera());
+    // Intentionally do NOT set videoRef.current
+
+    await act(async () => {
+      await result.current.startCamera();
+    });
+
+    expect(orphanStop).toHaveBeenCalled();
+    expect(result.current.isReady).toBe(false);
+  });
+
+  it("stops stream when video.play() fails", async () => {
+    const failStop = vi.fn();
+    const failStream = {
+      getTracks: () => [{ stop: failStop, kind: "video" }],
+    } as unknown as MediaStream;
+    mockGetUserMedia.mockResolvedValue(failStream);
+
+    const video = mockVideoElement();
+    video.play = vi
+      .fn()
+      .mockRejectedValue(new Error("play() interrupted")) as unknown as typeof video.play;
+
+    const { result } = renderHook(() => useCamera());
+    result.current.videoRef.current = video;
+
+    await act(async () => {
+      await result.current.startCamera();
+    });
+
+    expect(failStop).toHaveBeenCalled();
+    expect(result.current.isReady).toBe(false);
+    expect(result.current.error).toBe("play() interrupted");
+  });
 });

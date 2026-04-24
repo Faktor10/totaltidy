@@ -28,22 +28,28 @@ export function useCamera(options: UseCameraOptions = {}) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const requestIdRef = useRef(0);
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const stopStream = useCallback((stream: MediaStream) => {
+    for (const track of stream.getTracks()) {
+      track.stop();
+    }
+  }, []);
+
   const stopCamera = useCallback(() => {
+    requestIdRef.current += 1;
     if (streamRef.current) {
-      for (const track of streamRef.current.getTracks()) {
-        track.stop();
-      }
+      stopStream(streamRef.current);
       streamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     setIsReady(false);
-  }, []);
+  }, [stopStream]);
 
   const startCamera = useCallback(async () => {
     setError(null);
@@ -55,6 +61,8 @@ export function useCamera(options: UseCameraOptions = {}) {
 
     stopCamera();
 
+    const currentRequestId = requestIdRef.current;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -65,14 +73,29 @@ export function useCamera(options: UseCameraOptions = {}) {
         audio: false,
       });
 
+      // Discard stale stream if stopCamera or a newer startCamera was called while awaiting
+      if (requestIdRef.current !== currentRequestId) {
+        stopStream(stream);
+        return;
+      }
+
       streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsReady(true);
+      if (!videoRef.current) {
+        stopStream(stream);
+        streamRef.current = null;
+        return;
       }
+
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play();
+      setIsReady(true);
     } catch (err) {
+      // Clean up the stream if play() failed but getUserMedia succeeded
+      if (streamRef.current && requestIdRef.current === currentRequestId) {
+        stopStream(streamRef.current);
+        streamRef.current = null;
+      }
       if (err instanceof DOMException) {
         if (err.name === "NotAllowedError") {
           setError("Camera permission denied");
@@ -85,7 +108,7 @@ export function useCamera(options: UseCameraOptions = {}) {
       }
       setError(err instanceof Error ? err.message : "Failed to access camera");
     }
-  }, [facingMode, width, height, stopCamera]);
+  }, [facingMode, width, height, stopCamera, stopStream]);
 
   const capture = useCallback(async (): Promise<CaptureResult | null> => {
     const video = videoRef.current;
