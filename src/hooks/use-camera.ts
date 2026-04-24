@@ -44,6 +44,14 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const startCamera = useCallback(async () => {
     try {
       setError(null);
+
+      if (streamRef.current) {
+        for (const track of streamRef.current.getTracks()) {
+          track.stop();
+        }
+        streamRef.current = null;
+      }
+
       const constraints = buildConstraints(options);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
@@ -55,6 +63,12 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
       setIsActive(true);
     } catch (err) {
+      if (streamRef.current) {
+        for (const track of streamRef.current.getTracks()) {
+          track.stop();
+        }
+        streamRef.current = null;
+      }
       const message = err instanceof Error ? err.message : "Failed to access camera";
       setError(message);
       setIsActive(false);
