@@ -24,6 +24,7 @@
   bottom: 0;
   left: 0;
   right: 0;
+  z-index: 2;
   display: flex;
   justify-content: center;
   padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
@@ -62,6 +63,7 @@
 
 .closeButton {
   position: absolute;
+  z-index: 2;
   top: max(1rem, env(safe-area-inset-top, 0px));
   left: 1rem;
   width: 40px;
@@ -116,6 +118,8 @@
 
 .loading {
   position: absolute;
+  z-index: 1;
   inset: 0;
   background: #000;
+  pointer-events: none;
 }

@@ -12,7 +12,11 @@ export default function CapturePage() {
   }, []);
 
   const handleClose = useCallback(() => {
-    router.back();
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.replace("/dashboard");
+    }
   }, [router]);
 
   return <CameraView onCapture={handleCapture} onClose={handleClose} />;
