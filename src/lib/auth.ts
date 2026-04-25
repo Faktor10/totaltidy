@@ -21,10 +21,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Resend({
       from: process.env.AUTH_EMAIL_FROM ?? "TotalTidy <noreply@totaltidy.com>",
     }),
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
   ],
   session: {
     strategy: "jwt",
