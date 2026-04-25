@@ -15,8 +15,14 @@ export function CameraView({ onCapture, onError, onClose }: CameraViewProps) {
     useCamera();
 
   useEffect(() => {
-    startCamera();
-    return stopCamera;
+    let unmounted = false;
+    startCamera().then(() => {
+      if (unmounted) stopCamera();
+    });
+    return () => {
+      unmounted = true;
+      stopCamera();
+    };
   }, [startCamera, stopCamera]);
 
   useEffect(() => {

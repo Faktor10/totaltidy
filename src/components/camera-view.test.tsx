@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const mockStartCamera = vi.fn();
+const mockStartCamera = vi.fn().mockResolvedValue(undefined);
 const mockStopCamera = vi.fn();
 const mockCaptureFrame = vi.fn();
 const mockVideoRef = { current: null as HTMLVideoElement | null };
@@ -47,6 +47,27 @@ describe("CameraView", () => {
     const { unmount } = render(<CameraView />);
     unmount();
     expect(mockStopCamera).toHaveBeenCalled();
+  });
+
+  it("stops late-arriving stream when unmounted during camera startup", async () => {
+    let resolveStart: () => void;
+    mockStartCamera.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveStart = resolve;
+      }),
+    );
+
+    const { unmount } = render(<CameraView />);
+    expect(mockStartCamera).toHaveBeenCalledOnce();
+
+    unmount();
+    expect(mockStopCamera).toHaveBeenCalledOnce();
+
+    mockStopCamera.mockClear();
+    resolveStart?.();
+    await vi.waitFor(() => {
+      expect(mockStopCamera).toHaveBeenCalledOnce();
+    });
   });
 
   it("renders a video element", () => {
