@@ -151,4 +151,46 @@ describe("CameraView", () => {
     render(<CameraView />);
     expect(mockUseCamera).toHaveBeenCalledWith(undefined);
   });
+
+  it("shows flash overlay when shutter is clicked", async () => {
+    const captureFrame = vi.fn().mockResolvedValue(new Blob(["img"], { type: "image/jpeg" }));
+    mockUseCamera.mockReturnValue({ ...defaultReturn, isStreaming: true, captureFrame });
+
+    render(<CameraView />);
+    expect(screen.queryByTestId("shutter-flash")).toBeNull();
+
+    await fireEvent.click(screen.getByLabelText("Capture"));
+    expect(screen.getByTestId("shutter-flash")).toBeTruthy();
+  });
+
+  it("supports rapid-fire capture without blocking", async () => {
+    const fakeBlob = new Blob(["image"], { type: "image/jpeg" });
+    const onCapture = vi.fn();
+    const captureFrame = vi.fn().mockResolvedValue(fakeBlob);
+
+    mockUseCamera.mockReturnValue({ ...defaultReturn, isStreaming: true, captureFrame });
+
+    render(<CameraView onCapture={onCapture} />);
+    const shutter = screen.getByLabelText("Capture");
+
+    await fireEvent.click(shutter);
+    await fireEvent.click(shutter);
+    await fireEvent.click(shutter);
+
+    expect(captureFrame).toHaveBeenCalledTimes(3);
+    await vi.waitFor(() => {
+      expect(onCapture).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  it("keeps shutter button enabled during capture", async () => {
+    const captureFrame = vi.fn().mockResolvedValue(new Blob(["img"], { type: "image/jpeg" }));
+    mockUseCamera.mockReturnValue({ ...defaultReturn, isStreaming: true, captureFrame });
+
+    render(<CameraView />);
+    const shutter = screen.getByLabelText("Capture");
+
+    await fireEvent.click(shutter);
+    expect((shutter as HTMLButtonElement).disabled).toBe(false);
+  });
 });
