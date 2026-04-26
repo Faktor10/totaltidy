@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { CameraView } from "@/components/camera-view";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
