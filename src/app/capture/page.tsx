@@ -3,21 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { CameraView } from "@/components/camera-view";
+import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 
 export default function CapturePage() {
-  const router = useRouter();
+  const { upload } = useCloudinaryUpload();
 
-  const handleCapture = useCallback((_blob: Blob) => {
-    // Future: upload blob to Cloudinary and persist via tRPC
-  }, []);
+  const handleCapture = useCallback(
+    (blob: Blob) => {
+      void upload(blob);
+    },
+    [upload],
+  );
 
-  const handleClose = useCallback(() => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.replace("/dashboard");
-    }
-  }, [router]);
-
-  return <CameraView onCapture={handleCapture} onClose={handleClose} />;
+  return <CameraView onCapture={handleCapture} />;
 }
