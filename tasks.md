@@ -71,7 +71,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Build full-screen `<CameraView>` component — camera stays live after every shot
 - [x] Implement zero-lag shutter: capture blob from canvas, no confirmation dialog
 - [x] Upload blob directly to Cloudinary from client using unsigned preset; return `public_id`
-- [ ] Create `trpc.items.capture` mutation: accept `cloudinaryPublicId` + optional `locationId`, persist to DB with `status = 'inbox'`
+- [x] Create `trpc.items.capture` mutation: accept `cloudinaryPublicId` + optional `locationId`, persist to DB with `status = 'inbox'`
 - [ ] Build thumbnail tray showing last 3–4 captures (local blob URLs, no network wait)
 - [ ] Implement haptic feedback on capture via Vibration API
 - [ ] Build `<LocationStrip>` component: 3–5 quick-tap bubble buttons above shutter

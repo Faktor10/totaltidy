@@ -1,4 +1,5 @@
 import { createCallerFactory, protectedProcedure, publicProcedure, router } from "@/server/trpc";
+import { itemsRouter } from "./items";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -8,6 +9,8 @@ export const appRouter = router({
   me: protectedProcedure.query(({ ctx }) => {
     return { userId: ctx.session.user.id };
   }),
+
+  items: itemsRouter,
 });
 
 export type AppRouter = typeof appRouter;
