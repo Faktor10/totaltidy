@@ -1,77 +1,88 @@
 "use client";
 
-import { useCamera } from "@/hooks/use-camera";
-import "./camera-view.css";
 import { useCallback, useEffect } from "react";
+import { useCamera } from "@/hooks/use-camera";
+import styles from "./camera-view.module.css";
 
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
-  onError?: (error: string) => void;
   onClose?: () => void;
 }
 
-export function CameraView({ onCapture, onError, onClose }: CameraViewProps) {
+export function CameraView({ onCapture, onClose }: CameraViewProps) {
   const { videoRef, canvasRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
-    useCamera();
+    useCamera({ facingMode: "environment" });
 
   useEffect(() => {
-    let unmounted = false;
-    startCamera().then(() => {
-      if (unmounted) stopCamera();
-    });
+    startCamera();
     return () => {
-      unmounted = true;
       stopCamera();
     };
   }, [startCamera, stopCamera]);
 
-  useEffect(() => {
-    if (error) {
-      onError?.(error);
-    }
-  }, [error, onError]);
-
   const handleShutter = useCallback(async () => {
     const blob = await captureFrame();
-    if (blob) {
-      onCapture?.(blob);
+    if (blob && onCapture) {
+      onCapture(blob);
     }
   }, [captureFrame, onCapture]);
 
-  return (
-    <div className="camera-view">
-      <video ref={videoRef} autoPlay playsInline muted className="camera-view__video" />
-      <canvas ref={canvasRef} className="camera-view__canvas" />
-
-      {error && (
-        <div className="camera-view__error">
-          <p>{error}</p>
-          <button type="button" onClick={() => startCamera()} className="camera-view__retry-btn">
+  if (error) {
+    return (
+      <div className={styles.container} data-testid="camera-view">
+        <div className={styles.errorOverlay}>
+          <p className={styles.errorText}>{error}</p>
+          <button type="button" className={styles.retryButton} onClick={startCamera}>
             Try again
           </button>
+          {onClose && (
+            <button type="button" className={styles.closeButtonInline} onClick={onClose}>
+              Go back
+            </button>
+          )}
         </div>
-      )}
+      </div>
+    );
+  }
 
-      <div className="camera-view__controls">
-        {onClose && (
-          <button type="button" onClick={onClose} className="camera-view__close-btn">
-            <span className="camera-view__close-icon" aria-hidden="true">
-              &#x2715;
-            </span>
-            <span className="sr-only">Close camera</span>
-          </button>
-        )}
+  return (
+    <div className={styles.container} data-testid="camera-view">
+      <video
+        ref={videoRef}
+        className={styles.video}
+        autoPlay
+        playsInline
+        muted
+        data-testid="camera-video"
+      />
+      <canvas ref={canvasRef} className={styles.canvas} data-testid="camera-canvas" />
 
+      {onClose && (
         <button
           type="button"
+          className={styles.closeButton}
+          onClick={onClose}
+          aria-label="Close camera"
+          data-testid="close-button"
+        >
+          &times;
+        </button>
+      )}
+
+      <div className={styles.controls}>
+        <button
+          type="button"
+          className={styles.shutterButton}
           onClick={handleShutter}
           disabled={!isStreaming}
-          className="camera-view__shutter-btn"
-          aria-label="Take photo"
+          aria-label="Capture photo"
+          data-testid="shutter-button"
         >
-          <span className="camera-view__shutter-ring" />
+          <span className={styles.shutterInner} />
         </button>
       </div>
+
+      {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
     </div>
   );
 }
