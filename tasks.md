@@ -68,8 +68,8 @@ This file is the source of truth for build progress. Keep it up to date.
 ### Milestone 1.2 — Capture Flow (Weeks 3–4)
 
 - [x] Build `useCamera` hook wrapping `getUserMedia` with canvas-based capture (no file picker)
-- [ ] Build full-screen `<CameraView>` component — camera stays live after every shot
-- [ ] Implement zero-lag shutter: capture blob from canvas, no confirmation dialog
+- [x] Build full-screen `<CameraView>` component — camera stays live after every shot
+- [x] Implement zero-lag shutter: capture blob from canvas, no confirmation dialog
 - [ ] Upload blob directly to Cloudinary from client using unsigned preset; return `public_id`
 - [ ] Create `trpc.items.capture` mutation: accept `cloudinaryPublicId` + optional `locationId`, persist to DB with `status = 'inbox'`
 - [ ] Build thumbnail tray showing last 3–4 captures (local blob URLs, no network wait)
