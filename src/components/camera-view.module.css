@@ -41,6 +41,7 @@
   cursor: pointer;
   transition: transform 0.1s ease;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .shutterButton:active {
@@ -78,4 +79,23 @@
 
 .retryButton:active {
   background: rgba(255, 255, 255, 0.25);
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: shutter-flash 0.15s ease-out;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@keyframes shutter-flash {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
 }
