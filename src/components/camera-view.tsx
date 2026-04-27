@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import styles from "./camera-view.module.css";
+
+const MAX_THUMBNAILS = 4;
 
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
@@ -10,22 +12,44 @@ export interface CameraViewProps {
 }
 
 export function CameraView({ onCapture, onClose }: CameraViewProps) {
-  const { videoRef, canvasRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
-    useCamera({ facingMode: "environment" });
+  const { videoRef, isActive, error, startCamera, stopCamera, capture } = useCamera({
+    facingMode: "environment",
+  });
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const thumbnailsRef = useRef<string[]>([]);
 
   useEffect(() => {
     startCamera();
     return () => {
       stopCamera();
+      for (const url of thumbnailsRef.current) {
+        URL.revokeObjectURL(url);
+      }
     };
   }, [startCamera, stopCamera]);
 
   const handleShutter = useCallback(async () => {
-    const blob = await captureFrame();
-    if (blob && onCapture) {
-      onCapture(blob);
+    const result = await capture();
+    if (!result) return;
+
+    setThumbnails((prev) => {
+      const next = [result.blobUrl, ...prev];
+      if (next.length > MAX_THUMBNAILS) {
+        for (const url of next.slice(MAX_THUMBNAILS)) {
+          URL.revokeObjectURL(url);
+        }
+        const trimmed = next.slice(0, MAX_THUMBNAILS);
+        thumbnailsRef.current = trimmed;
+        return trimmed;
+      }
+      thumbnailsRef.current = next;
+      return next;
+    });
+
+    if (onCapture) {
+      onCapture(result.blob);
     }
-  }, [captureFrame, onCapture]);
+  }, [capture, onCapture]);
 
   if (error) {
     return (
@@ -55,7 +79,6 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
         muted
         data-testid="camera-video"
       />
-      <canvas ref={canvasRef} className={styles.canvas} data-testid="camera-canvas" />
 
       {onClose && (
         <button
@@ -70,11 +93,26 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
       )}
 
       <div className={styles.controls}>
+        {thumbnails.length > 0 && (
+          <div className={styles.thumbnailTray} data-testid="thumbnail-tray">
+            {thumbnails.map((url) => (
+              // biome-ignore lint/performance/noImgElement: blob URLs cannot be optimized by next/image
+              <img
+                key={url}
+                src={url}
+                alt="Recent capture"
+                className={styles.thumbnail}
+                data-testid="thumbnail"
+              />
+            ))}
+          </div>
+        )}
+
         <button
           type="button"
           className={styles.shutterButton}
           onClick={handleShutter}
-          disabled={!isStreaming}
+          disabled={!isActive}
           aria-label="Capture photo"
           data-testid="shutter-button"
         >
@@ -82,7 +120,7 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
         </button>
       </div>
 
-      {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
+      {!isActive && !error && <div className={styles.loading} data-testid="camera-loading" />}
     </div>
   );
 }
