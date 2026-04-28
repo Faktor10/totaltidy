@@ -6,6 +6,8 @@ const mockStartCamera = vi.fn();
 const mockStopCamera = vi.fn();
 const mockCaptureFrame = vi.fn();
 
+const mockTriggerHaptic = vi.fn();
+
 vi.mock("@/hooks/use-camera", () => ({
   useCamera: vi.fn(() => ({
     videoRef: { current: null },
@@ -16,6 +18,10 @@ vi.mock("@/hooks/use-camera", () => ({
     stopCamera: mockStopCamera,
     captureFrame: mockCaptureFrame,
   })),
+}));
+
+vi.mock("@/lib/haptics", () => ({
+  triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
 }));
 
 import { useCamera } from "@/hooks/use-camera";
@@ -34,6 +40,7 @@ describe("CameraView", () => {
     mockStartCamera.mockReset();
     mockStopCamera.mockReset();
     mockCaptureFrame.mockReset();
+    mockTriggerHaptic.mockReset();
     mockUseCamera.mockReturnValue({
       videoRef: { current: null },
       canvasRef: { current: null },
@@ -215,6 +222,30 @@ describe("CameraView", () => {
     expect(goBackButton).toBeDefined();
     fireEvent.click(goBackButton);
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("triggers haptic feedback on successful capture", async () => {
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
+
+    render(<CameraView onCapture={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
+
+    await vi.waitFor(() => {
+      expect(mockTriggerHaptic).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("does not trigger haptic feedback when capture fails", async () => {
+    mockCaptureFrame.mockResolvedValue(null);
+
+    render(<CameraView onCapture={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
+
+    await vi.waitFor(() => {
+      expect(mockCaptureFrame).toHaveBeenCalled();
+    });
+    expect(mockTriggerHaptic).not.toHaveBeenCalled();
   });
 
   it("keeps camera streaming after capture (does not stop camera)", async () => {

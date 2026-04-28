@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
+import { triggerHaptic } from "@/lib/haptics";
 import styles from "./camera-view.module.css";
 import { ThumbnailTray } from "./thumbnail-tray";
 
@@ -31,6 +32,8 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
   const handleShutter = useCallback(async () => {
     const result = await captureFrame();
     if (!result) return;
+
+    triggerHaptic();
 
     captureUrlsRef.current = [result.blobUrl, ...captureUrlsRef.current].slice(0, MAX_CAPTURES);
     setRecentCaptures((prev) => [result.blobUrl, ...prev].slice(0, MAX_CAPTURES));
