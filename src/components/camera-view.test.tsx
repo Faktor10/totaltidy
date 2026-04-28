@@ -23,6 +23,12 @@ import { CameraView } from "./camera-view";
 
 const mockUseCamera = vi.mocked(useCamera);
 
+function makeCaptureResult() {
+  const blob = new Blob(["test"], { type: "image/jpeg" });
+  const blobUrl = `blob:http://localhost/${Math.random().toString(36).slice(2)}`;
+  return { blob, blobUrl };
+}
+
 describe("CameraView", () => {
   beforeEach(() => {
     mockStartCamera.mockReset();
@@ -71,8 +77,8 @@ describe("CameraView", () => {
   });
 
   it("calls onCapture with blob when shutter is pressed", async () => {
-    const blob = new Blob(["test"], { type: "image/jpeg" });
-    mockCaptureFrame.mockResolvedValue(blob);
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
     const onCapture = vi.fn();
 
     render(<CameraView onCapture={onCapture} />);
@@ -212,8 +218,8 @@ describe("CameraView", () => {
   });
 
   it("keeps camera streaming after capture (does not stop camera)", async () => {
-    const blob = new Blob(["test"], { type: "image/jpeg" });
-    mockCaptureFrame.mockResolvedValue(blob);
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
     const onCapture = vi.fn();
 
     render(<CameraView onCapture={onCapture} />);
@@ -248,5 +254,75 @@ describe("CameraView", () => {
     expect(video.autoplay).toBe(true);
     expect(video.muted).toBe(true);
     expect(video.playsInline).toBe(true);
+  });
+
+  describe("thumbnail tray", () => {
+    it("does not show thumbnail tray before any captures", () => {
+      render(<CameraView />);
+      expect(screen.queryByTestId("thumbnail-tray")).toBeNull();
+    });
+
+    it("shows thumbnail tray after a capture", async () => {
+      const result = makeCaptureResult();
+      mockCaptureFrame.mockResolvedValue(result);
+
+      render(<CameraView onCapture={vi.fn()} />);
+      fireEvent.click(screen.getByTestId("shutter-button"));
+
+      await vi.waitFor(() => {
+        expect(screen.getByTestId("thumbnail-tray")).toBeDefined();
+      });
+
+      const images = screen.getAllByTestId("thumbnail-image");
+      expect(images).toHaveLength(1);
+      expect((images[0] as HTMLImageElement).src).toBe(result.blobUrl);
+    });
+
+    it("shows up to 4 thumbnails after multiple captures", async () => {
+      const results = Array.from({ length: 5 }, () => makeCaptureResult());
+      let callIndex = 0;
+      mockCaptureFrame.mockImplementation(() => {
+        const result = results[callIndex];
+        callIndex++;
+        return Promise.resolve(result);
+      });
+
+      render(<CameraView onCapture={vi.fn()} />);
+
+      for (let i = 0; i < 5; i++) {
+        fireEvent.click(screen.getByTestId("shutter-button"));
+        await vi.waitFor(() => {
+          expect(mockCaptureFrame).toHaveBeenCalledTimes(i + 1);
+        });
+      }
+
+      await vi.waitFor(() => {
+        const images = screen.getAllByTestId("thumbnail-image");
+        expect(images).toHaveLength(4);
+      });
+    });
+
+    it("shows newest capture first", async () => {
+      const first = makeCaptureResult();
+      const second = makeCaptureResult();
+
+      mockCaptureFrame.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
+
+      render(<CameraView onCapture={vi.fn()} />);
+
+      fireEvent.click(screen.getByTestId("shutter-button"));
+      await vi.waitFor(() => {
+        expect(screen.getAllByTestId("thumbnail-image")).toHaveLength(1);
+      });
+
+      fireEvent.click(screen.getByTestId("shutter-button"));
+      await vi.waitFor(() => {
+        expect(screen.getAllByTestId("thumbnail-image")).toHaveLength(2);
+      });
+
+      const images = screen.getAllByTestId("thumbnail-image") as HTMLImageElement[];
+      expect(images[0].src).toBe(second.blobUrl);
+      expect(images[1].src).toBe(first.blobUrl);
+    });
   });
 });

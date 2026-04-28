@@ -15,11 +15,12 @@ export interface CaptureResult {
 
 export interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  isActive: boolean;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  isStreaming: boolean;
   error: string | null;
   startCamera: () => Promise<void>;
   stopCamera: () => void;
-  capture: () => Promise<CaptureResult | null>;
+  captureFrame: () => Promise<CaptureResult | null>;
 }
 
 export function buildConstraints(options: UseCameraOptions): MediaStreamConstraints {
@@ -38,7 +39,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isActive, setIsActive] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const startCamera = useCallback(async () => {
@@ -61,7 +62,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         await videoRef.current.play();
       }
 
-      setIsActive(true);
+      setIsStreaming(true);
     } catch (err) {
       if (streamRef.current) {
         for (const track of streamRef.current.getTracks()) {
@@ -71,7 +72,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       }
       const message = err instanceof Error ? err.message : "Failed to access camera";
       setError(message);
-      setIsActive(false);
+      setIsStreaming(false);
     }
   }, [options]);
 
@@ -87,12 +88,12 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       videoRef.current.srcObject = null;
     }
 
-    setIsActive(false);
+    setIsStreaming(false);
   }, []);
 
-  const capture = useCallback(async (): Promise<CaptureResult | null> => {
+  const captureFrame = useCallback(async (): Promise<CaptureResult | null> => {
     const video = videoRef.current;
-    if (!video || !isActive) return null;
+    if (!video || !isStreaming) return null;
 
     if (!canvasRef.current) {
       canvasRef.current = document.createElement("canvas");
@@ -121,7 +122,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         0.85,
       );
     });
-  }, [isActive]);
+  }, [isStreaming]);
 
   useEffect(() => {
     return () => {
@@ -135,10 +136,11 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
   return {
     videoRef,
-    isActive,
+    canvasRef,
+    isStreaming,
     error,
     startCamera,
     stopCamera,
-    capture,
+    captureFrame,
   };
 }
