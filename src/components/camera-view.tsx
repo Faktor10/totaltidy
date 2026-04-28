@@ -4,16 +4,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import { triggerHaptic } from "@/lib/haptics";
 import styles from "./camera-view.module.css";
+import type { LocationBubble } from "./location-strip";
+import { LocationStrip } from "./location-strip";
 import { ThumbnailTray } from "./thumbnail-tray";
 
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
   onClose?: () => void;
+  locations?: LocationBubble[];
+  selectedLocationId?: string | null;
+  onLocationSelect?: (locationId: string) => void;
 }
 
 const MAX_CAPTURES = 4;
 
-export function CameraView({ onCapture, onClose }: CameraViewProps) {
+export function CameraView({
+  onCapture,
+  onClose,
+  locations = [],
+  selectedLocationId,
+  onLocationSelect,
+}: CameraViewProps) {
   const { videoRef, canvasRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
     useCamera({ facingMode: "environment" });
   const [recentCaptures, setRecentCaptures] = useState<string[]>([]);
@@ -86,6 +97,11 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
       )}
 
       <div className={styles.controls}>
+        <LocationStrip
+          locations={locations}
+          selectedId={selectedLocationId}
+          onSelect={onLocationSelect}
+        />
         <ThumbnailTray captures={recentCaptures} />
         <button
           type="button"
