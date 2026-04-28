@@ -5,6 +5,7 @@ import { useCamera } from "@/hooks/use-camera";
 import styles from "./camera-view.module.css";
 
 const MAX_THUMBNAILS = 4;
+const CAMERA_OPTIONS = { facingMode: "environment" } as const;
 
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
@@ -12,9 +13,7 @@ export interface CameraViewProps {
 }
 
 export function CameraView({ onCapture, onClose }: CameraViewProps) {
-  const { videoRef, isActive, error, startCamera, stopCamera, capture } = useCamera({
-    facingMode: "environment",
-  });
+  const { videoRef, isActive, error, startCamera, stopCamera, capture } = useCamera(CAMERA_OPTIONS);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const thumbnailsRef = useRef<string[]>([]);
 
