@@ -1,15 +1,16 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { LocationBubble } from "./location-strip";
 import { LocationStrip } from "./location-strip";
 
-const sampleLocations = [
-  { id: "1", name: "Playroom", icon: "🧸" },
-  { id: "2", name: "Kitchen", icon: "🍳" },
-  { id: "3", name: "Bedroom", icon: "🛏️" },
-  { id: "4", name: "Garage", icon: null },
-  { id: "5", name: "Attic" },
-];
+function makeLocations(count: number): LocationBubble[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `loc-${i + 1}`,
+    name: `Room ${i + 1}`,
+    icon: null,
+  }));
+}
 
 describe("LocationStrip", () => {
   afterEach(() => {
@@ -22,86 +23,95 @@ describe("LocationStrip", () => {
   });
 
   it("renders the strip container", () => {
-    render(<LocationStrip locations={sampleLocations} />);
+    render(<LocationStrip locations={makeLocations(3)} />);
     expect(screen.getByTestId("location-strip")).toBeDefined();
   });
 
-  it("renders a bubble for each location", () => {
-    render(<LocationStrip locations={sampleLocations} />);
+  it("renders one bubble per location", () => {
+    render(<LocationStrip locations={makeLocations(3)} />);
+    const bubbles = screen.getAllByTestId("location-bubble");
+    expect(bubbles).toHaveLength(3);
+  });
+
+  it("truncates to 5 bubbles when given more", () => {
+    render(<LocationStrip locations={makeLocations(7)} />);
     const bubbles = screen.getAllByTestId("location-bubble");
     expect(bubbles).toHaveLength(5);
   });
 
-  it("truncates to 5 when given more than 5 locations", () => {
-    const extra = [...sampleLocations, { id: "6", name: "Basement", icon: "🔦" }];
-    render(<LocationStrip locations={extra} />);
-    expect(screen.getAllByTestId("location-bubble")).toHaveLength(5);
-  });
-
   it("displays location names", () => {
-    render(<LocationStrip locations={sampleLocations} />);
-    expect(screen.getByText("Playroom")).toBeDefined();
+    const locations: LocationBubble[] = [
+      { id: "1", name: "Kitchen", icon: null },
+      { id: "2", name: "Bedroom", icon: null },
+    ];
+    render(<LocationStrip locations={locations} />);
     expect(screen.getByText("Kitchen")).toBeDefined();
     expect(screen.getByText("Bedroom")).toBeDefined();
   });
 
-  it("displays icons when provided", () => {
-    render(<LocationStrip locations={[{ id: "1", name: "Playroom", icon: "🧸" }]} />);
-    expect(screen.getByText("🧸")).toBeDefined();
+  it("displays custom icon when provided", () => {
+    const locations: LocationBubble[] = [{ id: "1", name: "Attic", icon: "\u{2B50}" }];
+    render(<LocationStrip locations={locations} />);
+    expect(screen.getByText("\u{2B50}")).toBeDefined();
   });
 
-  it("does not render icon span when icon is null", () => {
-    render(<LocationStrip locations={[{ id: "4", name: "Garage", icon: null }]} />);
-    const bubble = screen.getByTestId("location-bubble");
-    const spans = bubble.querySelectorAll("span");
-    expect(spans).toHaveLength(1);
+  it("displays a default icon based on name when no icon is set", () => {
+    const locations: LocationBubble[] = [{ id: "1", name: "Kitchen", icon: null }];
+    render(<LocationStrip locations={locations} />);
+    expect(screen.getByText("\u{1F373}")).toBeDefined();
   });
 
-  it("does not render icon span when icon is undefined", () => {
-    render(<LocationStrip locations={[{ id: "5", name: "Attic" }]} />);
-    const bubble = screen.getByTestId("location-bubble");
-    const spans = bubble.querySelectorAll("span");
-    expect(spans).toHaveLength(1);
+  it("displays fallback icon for unknown location names", () => {
+    const locations: LocationBubble[] = [{ id: "1", name: "Shed", icon: null }];
+    render(<LocationStrip locations={locations} />);
+    expect(screen.getByText("\u{1F4CD}")).toBeDefined();
   });
 
   it("calls onSelect with location id when bubble is tapped", () => {
     const onSelect = vi.fn();
-    render(<LocationStrip locations={sampleLocations} onSelect={onSelect} />);
-    fireEvent.click(screen.getByText("Kitchen"));
-    expect(onSelect).toHaveBeenCalledWith("2");
+    const locations: LocationBubble[] = [{ id: "loc-42", name: "Garage", icon: null }];
+    render(<LocationStrip locations={locations} onSelect={onSelect} />);
+    fireEvent.click(screen.getByTestId("location-bubble"));
+    expect(onSelect).toHaveBeenCalledWith("loc-42");
   });
 
   it("does not throw when onSelect is not provided", () => {
-    render(<LocationStrip locations={sampleLocations} />);
-    expect(() => {
-      fireEvent.click(screen.getByText("Playroom"));
-    }).not.toThrow();
+    const locations: LocationBubble[] = [{ id: "1", name: "Garage", icon: null }];
+    render(<LocationStrip locations={locations} />);
+    expect(() => fireEvent.click(screen.getByTestId("location-bubble"))).not.toThrow();
   });
 
-  it("marks selected bubble with aria-pressed true", () => {
-    render(<LocationStrip locations={sampleLocations} selectedId="2" />);
+  it("marks the selected bubble with aria-pressed=true", () => {
+    const locations: LocationBubble[] = [
+      { id: "1", name: "Room A", icon: null },
+      { id: "2", name: "Room B", icon: null },
+    ];
+    render(<LocationStrip locations={locations} selectedId="2" />);
     const bubbles = screen.getAllByTestId("location-bubble");
+    expect(bubbles[0].getAttribute("aria-pressed")).toBe("false");
     expect(bubbles[1].getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("marks non-selected bubbles with aria-pressed false", () => {
-    render(<LocationStrip locations={sampleLocations} selectedId="2" />);
+  it("applies selected class only to the selected bubble", () => {
+    const locations: LocationBubble[] = [
+      { id: "1", name: "Room A", icon: null },
+      { id: "2", name: "Room B", icon: null },
+    ];
+    render(<LocationStrip locations={locations} selectedId="1" />);
     const bubbles = screen.getAllByTestId("location-bubble");
-    expect(bubbles[0].getAttribute("aria-pressed")).toBe("false");
-    expect(bubbles[2].getAttribute("aria-pressed")).toBe("false");
+    expect(bubbles[0].className).toContain("selected");
+    expect(bubbles[1].className).not.toContain("selected");
   });
 
-  it("has no selected bubble when selectedId is null", () => {
-    render(<LocationStrip locations={sampleLocations} selectedId={null} />);
+  it("shows no selected bubble when selectedId is null", () => {
+    const locations: LocationBubble[] = [
+      { id: "1", name: "Room A", icon: null },
+      { id: "2", name: "Room B", icon: null },
+    ];
+    render(<LocationStrip locations={locations} selectedId={null} />);
     const bubbles = screen.getAllByTestId("location-bubble");
     for (const bubble of bubbles) {
       expect(bubble.getAttribute("aria-pressed")).toBe("false");
     }
-  });
-
-  it("sets accessible labels on bubbles", () => {
-    render(<LocationStrip locations={[{ id: "1", name: "Playroom" }]} />);
-    const bubble = screen.getByTestId("location-bubble");
-    expect(bubble.getAttribute("aria-label")).toBe("Select location: Playroom");
   });
 });

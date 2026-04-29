@@ -103,6 +103,11 @@ export function CameraView({
           onSelect={onLocationSelect}
         />
         <ThumbnailTray captures={recentCaptures} />
+        <LocationStrip
+          locations={locations}
+          selectedId={selectedLocationId}
+          onSelect={onLocationSelect}
+        />
         <button
           type="button"
           className={styles.shutterButton}
