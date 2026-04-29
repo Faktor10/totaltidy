@@ -1,295 +1,359 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockStartCamera = vi.fn();
+const mockStopCamera = vi.fn();
+const mockCaptureFrame = vi.fn();
+
+const mockTriggerHaptic = vi.fn();
+
+vi.mock("@/hooks/use-camera", () => ({
+  useCamera: vi.fn(() => ({
+    videoRef: { current: null },
+    canvasRef: { current: null },
+    isStreaming: true,
+    error: null,
+    startCamera: mockStartCamera,
+    stopCamera: mockStopCamera,
+    captureFrame: mockCaptureFrame,
+  })),
+}));
+
+vi.mock("@/lib/haptics", () => ({
+  triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
+}));
+
+import { useCamera } from "@/hooks/use-camera";
 import { CameraView } from "./camera-view";
 
-function createMockTrack(): MediaStreamTrack {
-  return { stop: vi.fn(), kind: "video" } as unknown as MediaStreamTrack;
-}
+const mockUseCamera = vi.mocked(useCamera);
 
-function createMockStream(tracks: MediaStreamTrack[] = [createMockTrack()]): MediaStream {
-  return { getTracks: () => tracks } as unknown as MediaStream;
+function makeCaptureResult() {
+  const blob = new Blob(["test"], { type: "image/jpeg" });
+  const blobUrl = `blob:http://localhost/${Math.random().toString(36).slice(2)}`;
+  return { blob, blobUrl };
 }
 
 describe("CameraView", () => {
-  let mockGetUserMedia: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
-    mockGetUserMedia = vi.fn();
-    Object.defineProperty(globalThis, "navigator", {
-      value: {
-        mediaDevices: {
-          getUserMedia: mockGetUserMedia,
-        },
-      },
-      writable: true,
-      configurable: true,
+    mockStartCamera.mockReset();
+    mockStopCamera.mockReset();
+    mockCaptureFrame.mockReset();
+    mockTriggerHaptic.mockReset();
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: true,
+      error: null,
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
     });
   });
 
   afterEach(() => {
     cleanup();
-    vi.restoreAllMocks();
   });
 
-  it("renders the camera view container", async () => {
-    mockGetUserMedia.mockResolvedValue(createMockStream());
+  it("renders the camera container", () => {
     render(<CameraView />);
-
     expect(screen.getByTestId("camera-view")).toBeDefined();
   });
 
-  it("shows loading state before camera starts", () => {
-    mockGetUserMedia.mockReturnValue(new Promise(() => {}));
+  it("renders video and canvas elements", () => {
     render(<CameraView />);
-
-    expect(screen.getByText("Starting camera…")).toBeDefined();
+    expect(screen.getByTestId("camera-video")).toBeDefined();
+    expect(screen.getByTestId("camera-canvas")).toBeDefined();
   });
 
-  it("shows error message and retry button when camera fails", async () => {
-    const err = new DOMException("Permission denied", "NotAllowedError");
-    mockGetUserMedia.mockRejectedValue(err);
-
+  it("renders the shutter button", () => {
     render(<CameraView />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Camera permission was denied")).toBeDefined();
-    });
-    expect(screen.getByText("Try again")).toBeDefined();
-  });
-
-  it("shows shutter button when camera is streaming", async () => {
-    const stream = createMockStream();
-    mockGetUserMedia.mockResolvedValue(stream);
-
-    render(<CameraView />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-  });
-
-  it("renders video and hidden canvas elements when streaming", async () => {
-    mockGetUserMedia.mockResolvedValue(createMockStream());
-
-    render(<CameraView />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-
-    const video = document.querySelector("video");
-    const canvas = document.querySelector("canvas");
-    expect(video).not.toBeNull();
-    expect(canvas).not.toBeNull();
-    expect(video?.autoplay).toBe(true);
-    expect(video?.muted).toBe(true);
-  });
-
-  it("calls onCapture with blob when shutter is pressed", async () => {
-    const stream = createMockStream();
-    mockGetUserMedia.mockResolvedValue(stream);
-    const onCapture = vi.fn();
-
-    render(<CameraView onCapture={onCapture} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      const mockCtx = { drawImage: vi.fn() };
-      vi.spyOn(canvas, "getContext").mockReturnValue(
-        mockCtx as unknown as CanvasRenderingContext2D,
-      );
-      vi.spyOn(canvas, "toBlob").mockImplementation((cb) => {
-        cb(new Blob(["test"], { type: "image/jpeg" }));
-      });
-    }
-
-    const video = document.querySelector("video") as HTMLVideoElement;
-    if (video) {
-      Object.defineProperty(video, "videoWidth", { value: 1920 });
-      Object.defineProperty(video, "videoHeight", { value: 1080 });
-    }
-
-    fireEvent.click(screen.getByTestId("shutter-button"));
-
-    await waitFor(() => {
-      expect(onCapture).toHaveBeenCalledOnce();
-      expect(onCapture.mock.calls[0][0]).toBeInstanceOf(Blob);
-    });
-  });
-
-  it("shows flash animation on capture", async () => {
-    const stream = createMockStream();
-    mockGetUserMedia.mockResolvedValue(stream);
-
-    render(<CameraView onCapture={vi.fn()} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      const mockCtx = { drawImage: vi.fn() };
-      vi.spyOn(canvas, "getContext").mockReturnValue(
-        mockCtx as unknown as CanvasRenderingContext2D,
-      );
-      vi.spyOn(canvas, "toBlob").mockImplementation((cb) => {
-        cb(new Blob(["test"], { type: "image/jpeg" }));
-      });
-    }
-
-    const video = document.querySelector("video") as HTMLVideoElement;
-    if (video) {
-      Object.defineProperty(video, "videoWidth", { value: 1920 });
-      Object.defineProperty(video, "videoHeight", { value: 1080 });
-    }
-
-    fireEvent.click(screen.getByTestId("shutter-button"));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("capture-flash")).toBeDefined();
-    });
-  });
-
-  it("camera remains streaming after capture", async () => {
-    const track = createMockTrack();
-    const stream = createMockStream([track]);
-    mockGetUserMedia.mockResolvedValue(stream);
-
-    render(<CameraView onCapture={vi.fn()} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      const mockCtx = { drawImage: vi.fn() };
-      vi.spyOn(canvas, "getContext").mockReturnValue(
-        mockCtx as unknown as CanvasRenderingContext2D,
-      );
-      vi.spyOn(canvas, "toBlob").mockImplementation((cb) => {
-        cb(new Blob(["test"], { type: "image/jpeg" }));
-      });
-    }
-
-    const video = document.querySelector("video") as HTMLVideoElement;
-    if (video) {
-      Object.defineProperty(video, "videoWidth", { value: 1920 });
-      Object.defineProperty(video, "videoHeight", { value: 1080 });
-    }
-
-    fireEvent.click(screen.getByTestId("shutter-button"));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("capture-flash")).toBeDefined();
-    });
-
-    expect(track.stop).not.toHaveBeenCalled();
     expect(screen.getByTestId("shutter-button")).toBeDefined();
   });
 
-  it("retries camera when retry button is clicked", async () => {
-    const err = new DOMException("Permission denied", "NotAllowedError");
-    mockGetUserMedia.mockRejectedValueOnce(err);
-    mockGetUserMedia.mockResolvedValueOnce(createMockStream());
-
+  it("starts camera on mount", () => {
     render(<CameraView />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Try again")).toBeDefined();
-    });
-
-    fireEvent.click(screen.getByText("Try again"));
-
-    await waitFor(() => {
-      expect(mockGetUserMedia).toHaveBeenCalledTimes(2);
-    });
+    expect(mockStartCamera).toHaveBeenCalledOnce();
   });
 
-  it("stops camera tracks on unmount", async () => {
-    const track = createMockTrack();
-    const stream = createMockStream([track]);
-    mockGetUserMedia.mockResolvedValue(stream);
-
+  it("stops camera on unmount", () => {
     const { unmount } = render(<CameraView />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-
     unmount();
-
-    expect(track.stop).toHaveBeenCalled();
+    expect(mockStopCamera).toHaveBeenCalled();
   });
 
-  it("shutter button has accessible label", async () => {
-    mockGetUserMedia.mockResolvedValue(createMockStream());
+  it("calls onCapture with blob when shutter is pressed", async () => {
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
+    const onCapture = vi.fn();
 
-    render(<CameraView />);
+    render(<CameraView onCapture={onCapture} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
 
-    await waitFor(() => {
-      const button = screen.getByTestId("shutter-button");
-      expect(button.getAttribute("aria-label")).toBe("Capture photo");
+    await vi.waitFor(() => {
+      expect(onCapture).toHaveBeenCalledWith(blob);
     });
   });
 
   it("does not call onCapture when captureFrame returns null", async () => {
-    mockGetUserMedia.mockResolvedValue(createMockStream());
+    mockCaptureFrame.mockResolvedValue(null);
     const onCapture = vi.fn();
 
     render(<CameraView onCapture={onCapture} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
-    });
-
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      vi.spyOn(canvas, "getContext").mockReturnValue(null);
-    }
-
     fireEvent.click(screen.getByTestId("shutter-button"));
 
-    await new Promise((r) => setTimeout(r, 50));
+    await vi.waitFor(() => {
+      expect(mockCaptureFrame).toHaveBeenCalled();
+    });
     expect(onCapture).not.toHaveBeenCalled();
   });
 
-  it("renders with no onCapture callback without errors", async () => {
-    mockGetUserMedia.mockResolvedValue(createMockStream());
-
-    render(<CameraView />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("shutter-button")).toBeDefined();
+  it("disables shutter button when not streaming", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: null,
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
     });
 
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      const mockCtx = { drawImage: vi.fn() };
-      vi.spyOn(canvas, "getContext").mockReturnValue(
-        mockCtx as unknown as CanvasRenderingContext2D,
-      );
-      vi.spyOn(canvas, "toBlob").mockImplementation((cb) => {
-        cb(new Blob(["test"], { type: "image/jpeg" }));
-      });
-    }
+    render(<CameraView />);
+    const button = screen.getByTestId("shutter-button") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+  });
 
-    const video = document.querySelector("video") as HTMLVideoElement;
-    if (video) {
-      Object.defineProperty(video, "videoWidth", { value: 1920 });
-      Object.defineProperty(video, "videoHeight", { value: 1080 });
-    }
+  it("shows loading indicator when not streaming and no error", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: null,
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
+    });
 
+    render(<CameraView />);
+    expect(screen.getByTestId("camera-loading")).toBeDefined();
+  });
+
+  it("shows error message when camera has error", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: "Camera permission was denied",
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
+    });
+
+    render(<CameraView />);
+    expect(screen.getByText("Camera permission was denied")).toBeDefined();
+  });
+
+  it("shows retry button on error", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: "Camera permission was denied",
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
+    });
+
+    render(<CameraView />);
+    const retryButton = screen.getByText("Try again");
+    expect(retryButton).toBeDefined();
+  });
+
+  it("calls startCamera when retry button is clicked", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: "Camera permission was denied",
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
+    });
+
+    render(<CameraView />);
+    mockStartCamera.mockReset();
+    fireEvent.click(screen.getByText("Try again"));
+    expect(mockStartCamera).toHaveBeenCalledOnce();
+  });
+
+  it("renders close button when onClose is provided", () => {
+    render(<CameraView onClose={() => {}} />);
+    expect(screen.getByTestId("close-button")).toBeDefined();
+  });
+
+  it("does not render close button when onClose is not provided", () => {
+    render(<CameraView />);
+    expect(screen.queryByTestId("close-button")).toBeNull();
+  });
+
+  it("calls onClose when close button is clicked", () => {
+    const onClose = vi.fn();
+    render(<CameraView onClose={onClose} />);
+    fireEvent.click(screen.getByTestId("close-button"));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("shows go back button on error when onClose is provided", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: "No camera found on this device",
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
+    });
+
+    const onClose = vi.fn();
+    render(<CameraView onClose={onClose} />);
+    const goBackButton = screen.getByText("Go back");
+    expect(goBackButton).toBeDefined();
+    fireEvent.click(goBackButton);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("triggers haptic feedback on successful capture", async () => {
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
+
+    render(<CameraView onCapture={vi.fn()} />);
     fireEvent.click(screen.getByTestId("shutter-button"));
 
-    await waitFor(() => {
-      expect(screen.getByTestId("capture-flash")).toBeDefined();
+    await vi.waitFor(() => {
+      expect(mockTriggerHaptic).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("does not trigger haptic feedback when capture fails", async () => {
+    mockCaptureFrame.mockResolvedValue(null);
+
+    render(<CameraView onCapture={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
+
+    await vi.waitFor(() => {
+      expect(mockCaptureFrame).toHaveBeenCalled();
+    });
+    expect(mockTriggerHaptic).not.toHaveBeenCalled();
+  });
+
+  it("keeps camera streaming after capture (does not stop camera)", async () => {
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
+    const onCapture = vi.fn();
+
+    render(<CameraView onCapture={onCapture} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
+
+    await vi.waitFor(() => {
+      expect(onCapture).toHaveBeenCalled();
+    });
+
+    expect(mockStopCamera).not.toHaveBeenCalled();
+  });
+
+  it("does not show video/shutter in error state", () => {
+    mockUseCamera.mockReturnValue({
+      videoRef: { current: null },
+      canvasRef: { current: null },
+      isStreaming: false,
+      error: "Camera permission was denied",
+      startCamera: mockStartCamera,
+      stopCamera: mockStopCamera,
+      captureFrame: mockCaptureFrame,
+    });
+
+    render(<CameraView />);
+    expect(screen.queryByTestId("camera-video")).toBeNull();
+    expect(screen.queryByTestId("shutter-button")).toBeNull();
+  });
+
+  it("video element has correct attributes", () => {
+    render(<CameraView />);
+    const video = screen.getByTestId("camera-video") as HTMLVideoElement;
+    expect(video.autoplay).toBe(true);
+    expect(video.muted).toBe(true);
+    expect(video.playsInline).toBe(true);
+  });
+
+  describe("thumbnail tray", () => {
+    it("does not show thumbnail tray before any captures", () => {
+      render(<CameraView />);
+      expect(screen.queryByTestId("thumbnail-tray")).toBeNull();
+    });
+
+    it("shows thumbnail tray after a capture", async () => {
+      const result = makeCaptureResult();
+      mockCaptureFrame.mockResolvedValue(result);
+
+      render(<CameraView onCapture={vi.fn()} />);
+      fireEvent.click(screen.getByTestId("shutter-button"));
+
+      await vi.waitFor(() => {
+        expect(screen.getByTestId("thumbnail-tray")).toBeDefined();
+      });
+
+      const images = screen.getAllByTestId("thumbnail-image");
+      expect(images).toHaveLength(1);
+      expect((images[0] as HTMLImageElement).src).toBe(result.blobUrl);
+    });
+
+    it("shows up to 4 thumbnails after multiple captures", async () => {
+      const results = Array.from({ length: 5 }, () => makeCaptureResult());
+      let callIndex = 0;
+      mockCaptureFrame.mockImplementation(() => {
+        const result = results[callIndex];
+        callIndex++;
+        return Promise.resolve(result);
+      });
+
+      render(<CameraView onCapture={vi.fn()} />);
+
+      for (let i = 0; i < 5; i++) {
+        fireEvent.click(screen.getByTestId("shutter-button"));
+        await vi.waitFor(() => {
+          expect(mockCaptureFrame).toHaveBeenCalledTimes(i + 1);
+        });
+      }
+
+      await vi.waitFor(() => {
+        const images = screen.getAllByTestId("thumbnail-image");
+        expect(images).toHaveLength(4);
+      });
+    });
+
+    it("shows newest capture first", async () => {
+      const first = makeCaptureResult();
+      const second = makeCaptureResult();
+
+      mockCaptureFrame.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
+
+      render(<CameraView onCapture={vi.fn()} />);
+
+      fireEvent.click(screen.getByTestId("shutter-button"));
+      await vi.waitFor(() => {
+        expect(screen.getAllByTestId("thumbnail-image")).toHaveLength(1);
+      });
+
+      fireEvent.click(screen.getByTestId("shutter-button"));
+      await vi.waitFor(() => {
+        expect(screen.getAllByTestId("thumbnail-image")).toHaveLength(2);
+      });
+
+      const images = screen.getAllByTestId("thumbnail-image") as HTMLImageElement[];
+      expect(images[0].src).toBe(second.blobUrl);
+      expect(images[1].src).toBe(first.blobUrl);
     });
   });
 });

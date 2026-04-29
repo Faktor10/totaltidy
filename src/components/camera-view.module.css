@@ -1,20 +1,15 @@
 .container {
   position: fixed;
   inset: 0;
+  z-index: 100;
   background: #000;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 100;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
+  overflow: hidden;
 }
 
 .video {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -29,12 +24,11 @@
   bottom: 0;
   left: 0;
   right: 0;
+  z-index: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding-bottom: env(safe-area-inset-bottom, 24px);
-  padding-top: 16px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
 }
 
 .shutterButton {
@@ -42,97 +36,91 @@
   height: 72px;
   border-radius: 50%;
   border: 4px solid #fff;
-  background: rgba(255, 255, 255, 0.25);
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.1s ease;
-  margin-bottom: 24px;
   -webkit-tap-highlight-color: transparent;
 }
 
 .shutterButton:active {
-  transform: scale(0.9);
+  transform: scale(0.92);
+}
+
+.shutterButton:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .shutterInner {
+  display: block;
   width: 56px;
   height: 56px;
   border-radius: 50%;
   background: #fff;
-  pointer-events: none;
 }
 
-.flash {
+.closeButton {
   position: absolute;
-  inset: 0;
-  background: #fff;
-  opacity: 0;
-  pointer-events: none;
-  animation: flashPulse 0.15s ease-out;
-}
-
-@keyframes flashPulse {
-  0% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 0;
-  }
+  z-index: 2;
+  top: max(1rem, env(safe-area-inset-top, 0px));
+  left: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .errorOverlay {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  color: #fff;
+  gap: 1rem;
+  padding: 2rem;
   text-align: center;
-  padding: 24px;
 }
 
-.errorMessage {
-  font-size: 16px;
-  line-height: 1.4;
-  max-width: 300px;
+.errorText {
+  color: #fff;
+  font-size: 1.125rem;
 }
 
 .retryButton {
-  padding: 12px 24px;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   border: none;
   background: #fff;
   color: #000;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
 }
 
-.startOverlay {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+.closeButtonInline {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
   color: #fff;
-  text-align: center;
-  padding: 24px;
-}
-
-.startButton {
-  padding: 14px 32px;
-  border-radius: 8px;
-  border: none;
-  background: #fff;
-  color: #000;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 
-.startLabel {
-  font-size: 16px;
-  opacity: 0.8;
+.loading {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
 }

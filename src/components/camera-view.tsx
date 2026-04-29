@@ -1,75 +1,126 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
+import { triggerHaptic } from "@/lib/haptics";
 import styles from "./camera-view.module.css";
+import type { LocationBubble } from "./location-strip";
+import { LocationStrip } from "./location-strip";
+import { ThumbnailTray } from "./thumbnail-tray";
 
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
+  onClose?: () => void;
+  locations?: LocationBubble[];
+  selectedLocationId?: string | null;
+  onLocationSelect?: (locationId: string) => void;
 }
 
-export function CameraView({ onCapture }: CameraViewProps) {
+const MAX_CAPTURES = 4;
+
+export function CameraView({
+  onCapture,
+  onClose,
+  locations = [],
+  selectedLocationId,
+  onLocationSelect,
+}: CameraViewProps) {
   const { videoRef, canvasRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
     useCamera({ facingMode: "environment" });
-
-  const [showFlash, setShowFlash] = useState(false);
+  const [recentCaptures, setRecentCaptures] = useState<string[]>([]);
+  const captureUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     startCamera();
     return () => {
       stopCamera();
+      for (const url of captureUrlsRef.current) {
+        URL.revokeObjectURL(url);
+      }
     };
   }, [startCamera, stopCamera]);
 
   const handleShutter = useCallback(async () => {
-    const blob = await captureFrame();
-    if (!blob) return;
+    const result = await captureFrame();
+    if (!result) return;
 
-    setShowFlash(true);
-    onCapture?.(blob);
+    triggerHaptic();
+
+    captureUrlsRef.current = [result.blobUrl, ...captureUrlsRef.current].slice(0, MAX_CAPTURES);
+    setRecentCaptures((prev) => [result.blobUrl, ...prev].slice(0, MAX_CAPTURES));
+
+    if (onCapture) {
+      onCapture(result.blob);
+    }
   }, [captureFrame, onCapture]);
 
-  const handleFlashEnd = useCallback(() => {
-    setShowFlash(false);
-  }, []);
-
-  return (
-    <div className={styles.container} data-testid="camera-view">
-      <video ref={videoRef} className={styles.video} autoPlay playsInline muted />
-      <canvas ref={canvasRef} className={styles.canvas} />
-
-      {showFlash && (
-        <div className={styles.flash} data-testid="capture-flash" onAnimationEnd={handleFlashEnd} />
-      )}
-
-      {error && (
+  if (error) {
+    return (
+      <div className={styles.container} data-testid="camera-view">
         <div className={styles.errorOverlay}>
-          <p className={styles.errorMessage}>{error}</p>
+          <p className={styles.errorText}>{error}</p>
           <button type="button" className={styles.retryButton} onClick={startCamera}>
             Try again
           </button>
+          {onClose && (
+            <button type="button" className={styles.closeButtonInline} onClick={onClose}>
+              Go back
+            </button>
+          )}
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container} data-testid="camera-view">
+      <video
+        ref={videoRef}
+        className={styles.video}
+        autoPlay
+        playsInline
+        muted
+        data-testid="camera-video"
+      />
+      <canvas ref={canvasRef} className={styles.canvas} data-testid="camera-canvas" />
+
+      {onClose && (
+        <button
+          type="button"
+          className={styles.closeButton}
+          onClick={onClose}
+          aria-label="Close camera"
+          data-testid="close-button"
+        >
+          &times;
+        </button>
       )}
 
-      {!error && !isStreaming && (
-        <div className={styles.startOverlay}>
-          <p className={styles.startLabel}>Starting camera…</p>
-        </div>
-      )}
+      <div className={styles.controls}>
+        <LocationStrip
+          locations={locations}
+          selectedId={selectedLocationId}
+          onSelect={onLocationSelect}
+        />
+        <ThumbnailTray captures={recentCaptures} />
+        <LocationStrip
+          locations={locations}
+          selectedId={selectedLocationId}
+          onSelect={onLocationSelect}
+        />
+        <button
+          type="button"
+          className={styles.shutterButton}
+          onClick={handleShutter}
+          disabled={!isStreaming}
+          aria-label="Capture photo"
+          data-testid="shutter-button"
+        >
+          <span className={styles.shutterInner} />
+        </button>
+      </div>
 
-      {isStreaming && (
-        <div className={styles.controls}>
-          <button
-            type="button"
-            className={styles.shutterButton}
-            onClick={handleShutter}
-            aria-label="Capture photo"
-            data-testid="shutter-button"
-          >
-            <span className={styles.shutterInner} />
-          </button>
-        </div>
-      )}
+      {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
     </div>
   );
 }
