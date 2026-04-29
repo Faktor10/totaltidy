@@ -8,6 +8,9 @@ import type { LocationBubble } from "./location-strip";
 import { LocationStrip } from "./location-strip";
 import { ThumbnailTray } from "./thumbnail-tray";
 
+const MAX_THUMBNAILS = 4;
+const CAMERA_OPTIONS = { facingMode: "environment" } as const;
+
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
   onClose?: () => void;
@@ -16,43 +19,43 @@ export interface CameraViewProps {
   onLocationSelect?: (locationId: string) => void;
 }
 
-const MAX_CAPTURES = 4;
-
-export function CameraView({
-  onCapture,
-  onClose,
-  locations = [],
-  selectedLocationId,
-  onLocationSelect,
-}: CameraViewProps) {
-  const { videoRef, canvasRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
-    useCamera({ facingMode: "environment" });
-  const [recentCaptures, setRecentCaptures] = useState<string[]>([]);
-  const captureUrlsRef = useRef<string[]>([]);
+export function CameraView({ onCapture, onClose }: CameraViewProps) {
+  const { videoRef, isActive, error, startCamera, stopCamera, capture } = useCamera(CAMERA_OPTIONS);
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const thumbnailsRef = useRef<string[]>([]);
 
   useEffect(() => {
     startCamera();
     return () => {
       stopCamera();
-      for (const url of captureUrlsRef.current) {
+      for (const url of thumbnailsRef.current) {
         URL.revokeObjectURL(url);
       }
     };
   }, [startCamera, stopCamera]);
 
   const handleShutter = useCallback(async () => {
-    const result = await captureFrame();
+    const result = await capture();
     if (!result) return;
 
-    triggerHaptic();
-
-    captureUrlsRef.current = [result.blobUrl, ...captureUrlsRef.current].slice(0, MAX_CAPTURES);
-    setRecentCaptures((prev) => [result.blobUrl, ...prev].slice(0, MAX_CAPTURES));
+    setThumbnails((prev) => {
+      const next = [result.blobUrl, ...prev];
+      if (next.length > MAX_THUMBNAILS) {
+        for (const url of next.slice(MAX_THUMBNAILS)) {
+          URL.revokeObjectURL(url);
+        }
+        const trimmed = next.slice(0, MAX_THUMBNAILS);
+        thumbnailsRef.current = trimmed;
+        return trimmed;
+      }
+      thumbnailsRef.current = next;
+      return next;
+    });
 
     if (onCapture) {
       onCapture(result.blob);
     }
-  }, [captureFrame, onCapture]);
+  }, [capture, onCapture]);
 
   if (error) {
     return (
@@ -82,7 +85,6 @@ export function CameraView({
         muted
         data-testid="camera-video"
       />
-      <canvas ref={canvasRef} className={styles.canvas} data-testid="camera-canvas" />
 
       {onClose && (
         <button
@@ -97,22 +99,26 @@ export function CameraView({
       )}
 
       <div className={styles.controls}>
-        <LocationStrip
-          locations={locations}
-          selectedId={selectedLocationId}
-          onSelect={onLocationSelect}
-        />
-        <ThumbnailTray captures={recentCaptures} />
-        <LocationStrip
-          locations={locations}
-          selectedId={selectedLocationId}
-          onSelect={onLocationSelect}
-        />
+        {thumbnails.length > 0 && (
+          <div className={styles.thumbnailTray} data-testid="thumbnail-tray">
+            {thumbnails.map((url) => (
+              // biome-ignore lint/performance/noImgElement: blob URLs cannot be optimized by next/image
+              <img
+                key={url}
+                src={url}
+                alt="Recent capture"
+                className={styles.thumbnail}
+                data-testid="thumbnail"
+              />
+            ))}
+          </div>
+        )}
+
         <button
           type="button"
           className={styles.shutterButton}
           onClick={handleShutter}
-          disabled={!isStreaming}
+          disabled={!isActive}
           aria-label="Capture photo"
           data-testid="shutter-button"
         >
@@ -120,7 +126,7 @@ export function CameraView({
         </button>
       </div>
 
-      {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
+      {!isActive && !error && <div className={styles.loading} data-testid="camera-loading" />}
     </div>
   );
 }
