@@ -97,6 +97,11 @@ export function CameraView({
       )}
 
       <div className={styles.controls}>
+        <LocationStrip
+          locations={locations}
+          selectedId={selectedLocationId}
+          onSelect={onLocationSelect}
+        />
         <ThumbnailTray captures={recentCaptures} />
         <LocationStrip
           locations={locations}

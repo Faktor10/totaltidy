@@ -3,11 +3,11 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 0 1rem 14px;
+  gap: 8px;
+  padding: 0 1rem 12px;
   overflow-x: auto;
   scrollbar-width: none;
-  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .strip::-webkit-scrollbar {
@@ -16,20 +16,23 @@
 
 .bubble {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 4px;
-  border: none;
-  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 20px;
-  flex-shrink: 0;
   transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+    transform 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 .bubble:active {
@@ -37,36 +40,15 @@
 }
 
 .selected {
-  background: rgba(255, 255, 255, 0.9);
-  color: #1a1a1a;
+  background: rgba(255, 255, 255, 0.25);
+  border-color: #fff;
 }
 
 .icon {
-  font-size: 1.25rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 .label {
-  font-size: 0.6875rem;
-  font-weight: 500;
   line-height: 1;
-  white-space: nowrap;
-  max-width: 64px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@keyframes popIn {
-  from {
-    transform: scale(0.85);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.bubble {
-  animation: popIn 0.2s ease-out;
 }
