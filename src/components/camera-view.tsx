@@ -19,8 +19,15 @@ export interface CameraViewProps {
   onLocationSelect?: (locationId: string) => void;
 }
 
-export function CameraView({ onCapture, onClose }: CameraViewProps) {
-  const { videoRef, isActive, error, startCamera, stopCamera, capture } = useCamera(CAMERA_OPTIONS);
+export function CameraView({
+  onCapture,
+  onClose,
+  locations,
+  selectedLocationId,
+  onLocationSelect,
+}: CameraViewProps) {
+  const { videoRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
+    useCamera(CAMERA_OPTIONS);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const thumbnailsRef = useRef<string[]>([]);
 
@@ -35,8 +42,10 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
   }, [startCamera, stopCamera]);
 
   const handleShutter = useCallback(async () => {
-    const result = await capture();
+    const result = await captureFrame();
     if (!result) return;
+
+    triggerHaptic();
 
     setThumbnails((prev) => {
       const next = [result.blobUrl, ...prev];
@@ -55,7 +64,7 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
     if (onCapture) {
       onCapture(result.blob);
     }
-  }, [capture, onCapture]);
+  }, [captureFrame, onCapture]);
 
   if (error) {
     return (
@@ -99,26 +108,21 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
       )}
 
       <div className={styles.controls}>
-        {thumbnails.length > 0 && (
-          <div className={styles.thumbnailTray} data-testid="thumbnail-tray">
-            {thumbnails.map((url) => (
-              // biome-ignore lint/performance/noImgElement: blob URLs cannot be optimized by next/image
-              <img
-                key={url}
-                src={url}
-                alt="Recent capture"
-                className={styles.thumbnail}
-                data-testid="thumbnail"
-              />
-            ))}
-          </div>
+        <ThumbnailTray captures={thumbnails} />
+
+        {locations && locations.length > 0 && (
+          <LocationStrip
+            locations={locations}
+            selectedId={selectedLocationId}
+            onSelect={onLocationSelect}
+          />
         )}
 
         <button
           type="button"
           className={styles.shutterButton}
           onClick={handleShutter}
-          disabled={!isActive}
+          disabled={!isStreaming}
           aria-label="Capture photo"
           data-testid="shutter-button"
         >
@@ -126,7 +130,7 @@ export function CameraView({ onCapture, onClose }: CameraViewProps) {
         </button>
       </div>
 
-      {!isActive && !error && <div className={styles.loading} data-testid="camera-loading" />}
+      {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
     </div>
   );
 }
