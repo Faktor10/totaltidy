@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
+import { triggerHaptic } from "@/lib/haptics";
 import styles from "./camera-view.module.css";
+import type { LocationBubble } from "./location-strip";
+import { LocationStrip } from "./location-strip";
+import { ThumbnailTray } from "./thumbnail-tray";
 
 const MAX_THUMBNAILS = 4;
 const CAMERA_OPTIONS = { facingMode: "environment" } as const;
@@ -10,6 +14,9 @@ const CAMERA_OPTIONS = { facingMode: "environment" } as const;
 export interface CameraViewProps {
   onCapture?: (blob: Blob) => void;
   onClose?: () => void;
+  locations?: LocationBubble[];
+  selectedLocationId?: string | null;
+  onLocationSelect?: (locationId: string) => void;
 }
 
 export function CameraView({ onCapture, onClose }: CameraViewProps) {

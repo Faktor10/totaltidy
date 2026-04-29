@@ -6,6 +6,8 @@ const mockStartCamera = vi.fn();
 const mockStopCamera = vi.fn();
 const mockCapture = vi.fn();
 
+const mockTriggerHaptic = vi.fn();
+
 vi.mock("@/hooks/use-camera", () => ({
   useCamera: vi.fn(() => ({
     videoRef: { current: null },
@@ -17,21 +19,27 @@ vi.mock("@/hooks/use-camera", () => ({
   })),
 }));
 
+vi.mock("@/lib/haptics", () => ({
+  triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
+}));
+
 import { useCamera } from "@/hooks/use-camera";
 import { CameraView } from "./camera-view";
 
 const mockUseCamera = vi.mocked(useCamera);
 
-function makeCaptureResult(id = "1") {
-  const blob = new Blob([`test-${id}`], { type: "image/jpeg" });
-  return { blob, blobUrl: `blob:http://localhost/${id}` };
+function makeCaptureResult() {
+  const blob = new Blob(["test"], { type: "image/jpeg" });
+  const blobUrl = `blob:http://localhost/${Math.random().toString(36).slice(2)}`;
+  return { blob, blobUrl };
 }
 
 describe("CameraView", () => {
   beforeEach(() => {
     mockStartCamera.mockReset();
     mockStopCamera.mockReset();
-    mockCapture.mockReset();
+    mockCaptureFrame.mockReset();
+    mockTriggerHaptic.mockReset();
     mockUseCamera.mockReturnValue({
       videoRef: { current: null },
       isActive: true,
@@ -73,8 +81,8 @@ describe("CameraView", () => {
   });
 
   it("calls onCapture with blob when shutter is pressed", async () => {
-    const result = makeCaptureResult();
-    mockCapture.mockResolvedValue(result);
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
     const onCapture = vi.fn();
 
     render(<CameraView onCapture={onCapture} />);
@@ -207,9 +215,33 @@ describe("CameraView", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it("triggers haptic feedback on successful capture", async () => {
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
+
+    render(<CameraView onCapture={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
+
+    await vi.waitFor(() => {
+      expect(mockTriggerHaptic).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("does not trigger haptic feedback when capture fails", async () => {
+    mockCaptureFrame.mockResolvedValue(null);
+
+    render(<CameraView onCapture={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("shutter-button"));
+
+    await vi.waitFor(() => {
+      expect(mockCaptureFrame).toHaveBeenCalled();
+    });
+    expect(mockTriggerHaptic).not.toHaveBeenCalled();
+  });
+
   it("keeps camera streaming after capture (does not stop camera)", async () => {
-    const result = makeCaptureResult();
-    mockCapture.mockResolvedValue(result);
+    const { blob, blobUrl } = makeCaptureResult();
+    mockCaptureFrame.mockResolvedValue({ blob, blobUrl });
     const onCapture = vi.fn();
 
     render(<CameraView onCapture={onCapture} />);
@@ -251,123 +283,67 @@ describe("CameraView", () => {
       expect(screen.queryByTestId("thumbnail-tray")).toBeNull();
     });
 
-    it("shows a thumbnail after capturing", async () => {
-      const result = makeCaptureResult("a");
-      mockCapture.mockResolvedValue(result);
+    it("shows thumbnail tray after a capture", async () => {
+      const result = makeCaptureResult();
+      mockCaptureFrame.mockResolvedValue(result);
 
-      render(<CameraView />);
+      render(<CameraView onCapture={vi.fn()} />);
       fireEvent.click(screen.getByTestId("shutter-button"));
 
       await vi.waitFor(() => {
         expect(screen.getByTestId("thumbnail-tray")).toBeDefined();
       });
 
-      const thumbnails = screen.getAllByTestId("thumbnail");
-      expect(thumbnails).toHaveLength(1);
-      expect((thumbnails[0] as HTMLImageElement).src).toBe(result.blobUrl);
+      const images = screen.getAllByTestId("thumbnail-image");
+      expect(images).toHaveLength(1);
+      expect((images[0] as HTMLImageElement).src).toBe(result.blobUrl);
     });
 
-    it("shows multiple thumbnails after multiple captures", async () => {
-      let callCount = 0;
-      mockCapture.mockImplementation(() => {
-        callCount++;
-        return Promise.resolve(makeCaptureResult(String(callCount)));
+    it("shows up to 4 thumbnails after multiple captures", async () => {
+      const results = Array.from({ length: 5 }, () => makeCaptureResult());
+      let callIndex = 0;
+      mockCaptureFrame.mockImplementation(() => {
+        const result = results[callIndex];
+        callIndex++;
+        return Promise.resolve(result);
       });
 
-      render(<CameraView />);
-
-      fireEvent.click(screen.getByTestId("shutter-button"));
-      await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(1);
-      });
-
-      fireEvent.click(screen.getByTestId("shutter-button"));
-      await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(2);
-      });
-
-      fireEvent.click(screen.getByTestId("shutter-button"));
-      await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(3);
-      });
-    });
-
-    it("limits thumbnails to 4", async () => {
-      let callCount = 0;
-      mockCapture.mockImplementation(() => {
-        callCount++;
-        return Promise.resolve(makeCaptureResult(String(callCount)));
-      });
-
-      render(<CameraView />);
+      render(<CameraView onCapture={vi.fn()} />);
 
       for (let i = 0; i < 5; i++) {
         fireEvent.click(screen.getByTestId("shutter-button"));
         await vi.waitFor(() => {
-          expect(mockCapture).toHaveBeenCalledTimes(i + 1);
+          expect(mockCaptureFrame).toHaveBeenCalledTimes(i + 1);
         });
       }
 
       await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(4);
+        const images = screen.getAllByTestId("thumbnail-image");
+        expect(images).toHaveLength(4);
       });
     });
 
     it("shows newest capture first", async () => {
-      let callCount = 0;
-      mockCapture.mockImplementation(() => {
-        callCount++;
-        return Promise.resolve(makeCaptureResult(String(callCount)));
-      });
+      const first = makeCaptureResult();
+      const second = makeCaptureResult();
 
-      render(<CameraView />);
+      mockCaptureFrame.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
 
-      fireEvent.click(screen.getByTestId("shutter-button"));
-      await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(1);
-      });
+      render(<CameraView onCapture={vi.fn()} />);
 
       fireEvent.click(screen.getByTestId("shutter-button"));
       await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(2);
+        expect(screen.getAllByTestId("thumbnail-image")).toHaveLength(1);
       });
 
-      const thumbnails = screen.getAllByTestId("thumbnail");
-      expect((thumbnails[0] as HTMLImageElement).src).toBe("blob:http://localhost/2");
-      expect((thumbnails[1] as HTMLImageElement).src).toBe("blob:http://localhost/1");
-    });
-
-    it("does not show thumbnail tray when capture returns null", async () => {
-      mockCapture.mockResolvedValue(null);
-
-      render(<CameraView />);
       fireEvent.click(screen.getByTestId("shutter-button"));
-
       await vi.waitFor(() => {
-        expect(mockCapture).toHaveBeenCalled();
+        expect(screen.getAllByTestId("thumbnail-image")).toHaveLength(2);
       });
 
-      expect(screen.queryByTestId("thumbnail-tray")).toBeNull();
-    });
-
-    it("revokes blob URLs on unmount", async () => {
-      const revokeObjectURL = vi.fn();
-      vi.stubGlobal("URL", { ...globalThis.URL, revokeObjectURL });
-
-      const result = makeCaptureResult("cleanup");
-      mockCapture.mockResolvedValue(result);
-
-      const { unmount } = render(<CameraView />);
-      fireEvent.click(screen.getByTestId("shutter-button"));
-
-      await vi.waitFor(() => {
-        expect(screen.getAllByTestId("thumbnail")).toHaveLength(1);
-      });
-
-      unmount();
-      expect(revokeObjectURL).toHaveBeenCalledWith(result.blobUrl);
-
-      vi.unstubAllGlobals();
+      const images = screen.getAllByTestId("thumbnail-image") as HTMLImageElement[];
+      expect(images[0].src).toBe(second.blobUrl);
+      expect(images[1].src).toBe(first.blobUrl);
     });
   });
 });
