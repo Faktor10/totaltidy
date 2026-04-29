@@ -1,23 +1,29 @@
-[[ports]]
-localPort = 5173
-externalPort = 5173
+modules = ["nodejs-20"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm dev"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [[ports]]
-localPort = 5174
-externalPort = 3000
-
-[[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
-
-[[ports]]
-localPort = 8082
-externalPort = 3001
-
-[[ports]]
-localPort = 23279
+localPort = 3000
 externalPort = 80
