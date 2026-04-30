@@ -5,8 +5,10 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockCaptureItem = vi.fn();
+const mockAssignLocation = vi.fn();
 vi.mock("@/server/services/items", () => ({
   captureItem: (...args: unknown[]) => mockCaptureItem(...args),
+  assignLocation: (...args: unknown[]) => mockAssignLocation(...args),
 }));
 
 vi.mock("@/server/db", () => ({
@@ -99,6 +101,67 @@ describe("items.capture", () => {
         cloudinaryPublicId: "totaltidy/photo4",
         locationId: "not-a-uuid",
       }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("items.assignLocation", () => {
+  const validItemId = "550e8400-e29b-41d4-a716-446655440000";
+  const validLocationId = "660e8400-e29b-41d4-a716-446655440000";
+
+  it("throws UNAUTHORIZED when no session", async () => {
+    const caller = createCaller(unauthenticatedCtx);
+    await expect(
+      caller.items.assignLocation({ itemId: validItemId, locationId: validLocationId }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("calls assignLocation service with correct args", async () => {
+    const mockResult = { id: validItemId, locationId: validLocationId, status: "inbox" };
+    mockAssignLocation.mockResolvedValueOnce(mockResult);
+
+    const caller = createCaller(authenticatedCtx);
+    const result = await caller.items.assignLocation({
+      itemId: validItemId,
+      locationId: validLocationId,
+    });
+
+    expect(result).toEqual(mockResult);
+    expect(mockAssignLocation).toHaveBeenCalledWith(expect.anything(), "user-123", {
+      itemId: validItemId,
+      locationId: validLocationId,
+    });
+  });
+
+  it("throws NOT_FOUND when service throws Location not found", async () => {
+    mockAssignLocation.mockRejectedValueOnce(new Error("Location not found"));
+
+    const caller = createCaller(authenticatedCtx);
+    await expect(
+      caller.items.assignLocation({ itemId: validItemId, locationId: validLocationId }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND", message: "Location not found" });
+  });
+
+  it("throws NOT_FOUND when service throws Item not found", async () => {
+    mockAssignLocation.mockRejectedValueOnce(new Error("Item not found"));
+
+    const caller = createCaller(authenticatedCtx);
+    await expect(
+      caller.items.assignLocation({ itemId: validItemId, locationId: validLocationId }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND", message: "Item not found" });
+  });
+
+  it("rejects invalid itemId format", async () => {
+    const caller = createCaller(authenticatedCtx);
+    await expect(
+      caller.items.assignLocation({ itemId: "not-a-uuid", locationId: validLocationId }),
+    ).rejects.toThrow();
+  });
+
+  it("rejects invalid locationId format", async () => {
+    const caller = createCaller(authenticatedCtx);
+    await expect(
+      caller.items.assignLocation({ itemId: validItemId, locationId: "not-a-uuid" }),
     ).rejects.toThrow();
   });
 });
