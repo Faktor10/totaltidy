@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildCloudinaryUrl, captureItem } from "./items";
+import { assignLocation, buildCloudinaryUrl, captureItem } from "./items";
 
 vi.stubEnv("CLOUDINARY_CLOUD_NAME", "test-cloud");
 
@@ -104,5 +104,82 @@ describe("captureItem", () => {
     });
 
     expect(db.select).not.toHaveBeenCalled();
+  });
+});
+
+describe("assignLocation", () => {
+  const userId = "user-abc-123";
+  const itemId = "item-001";
+  const locationId = "loc-001";
+  const updatedItem = {
+    id: itemId,
+    userId,
+    cloudinaryPublicId: "totaltidy/photo1",
+    originalImageUrl: "https://res.cloudinary.com/test-cloud/image/upload/totaltidy/photo1",
+    processedImageUrl: null,
+    locationId,
+    captureSessionId: null,
+    label: null,
+    tags: null,
+    category: null,
+    status: "inbox" as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  function createMockDb(overrides?: { selectResults?: unknown[][]; updateResult?: unknown[] }) {
+    const selectResults = overrides?.selectResults ?? [[{ id: locationId }], [{ id: itemId }]];
+    const updateResult = overrides?.updateResult ?? [updatedItem];
+    let selectCallCount = 0;
+
+    return {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() => {
+            const result = selectResults[selectCallCount] ?? [];
+            selectCallCount++;
+            return Promise.resolve(result);
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue(updateResult),
+          }),
+        }),
+      }),
+    } as never;
+  }
+
+  it("assigns location to item and returns updated item", async () => {
+    const db = createMockDb();
+    const result = await assignLocation(db, userId, { itemId, locationId });
+
+    expect(result).toEqual(updatedItem);
+    expect(db.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws when location does not belong to user", async () => {
+    const db = createMockDb({ selectResults: [[], [{ id: itemId }]] });
+
+    await expect(assignLocation(db, userId, { itemId, locationId })).rejects.toThrow(
+      "Location not found",
+    );
+  });
+
+  it("throws when item does not belong to user", async () => {
+    const db = createMockDb({ selectResults: [[{ id: locationId }], []] });
+
+    await expect(assignLocation(db, userId, { itemId, locationId })).rejects.toThrow(
+      "Item not found",
+    );
+  });
+
+  it("updates location useCount and lastUsedAt", async () => {
+    const db = createMockDb();
+    await assignLocation(db, userId, { itemId, locationId });
+
+    expect(db.update).toHaveBeenCalledTimes(2);
   });
 });
