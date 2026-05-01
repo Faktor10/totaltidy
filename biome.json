@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!test-results", "!playwright-report", "!blob-report"]
+    "includes": [
+      "**",
+      "!artifacts",
+      "!**/dist",
+      "!test-results",
+      "!playwright-report",
+      "!blob-report"
+    ]
   },
   "formatter": {
     "enabled": true,
