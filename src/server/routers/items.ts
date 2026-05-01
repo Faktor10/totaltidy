@@ -1,10 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { assignLocation, captureItem } from "@/server/services/items";
+import { assignLocation, captureItem, listUnsortedItems } from "@/server/services/items";
 import { protectedProcedure, router } from "@/server/trpc";
 
 export const itemsRouter = router({
+  listUnsorted: protectedProcedure.query(async ({ ctx }) => {
+    return listUnsortedItems(db, ctx.userId);
+  }),
+
   capture: protectedProcedure
     .input(
       z.object({

@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
 
@@ -43,6 +43,14 @@ export async function captureItem(
     .returning();
 
   return item;
+}
+
+export async function listUnsortedItems(db: Database, userId: string) {
+  return db
+    .select()
+    .from(items)
+    .where(and(eq(items.userId, userId), isNull(items.locationId)))
+    .orderBy(desc(items.createdAt));
 }
 
 export async function assignLocation(
