@@ -44,3 +44,35 @@ export async function captureItem(
 
   return item;
 }
+
+export async function assignLocation(
+  db: Database,
+  userId: string,
+  input: { itemId: string; locationId: string },
+) {
+  const [location] = await db
+    .select({ id: locations.id })
+    .from(locations)
+    .where(and(eq(locations.id, input.locationId), eq(locations.userId, userId)));
+
+  if (!location) {
+    throw new Error("Location not found");
+  }
+
+  const [item] = await db
+    .select({ id: items.id })
+    .from(items)
+    .where(and(eq(items.id, input.itemId), eq(items.userId, userId)));
+
+  if (!item) {
+    throw new Error("Item not found");
+  }
+
+  const [updated] = await db
+    .update(items)
+    .set({ locationId: input.locationId })
+    .where(and(eq(items.id, input.itemId), eq(items.userId, userId)))
+    .returning();
+
+  return updated;
+}

@@ -76,7 +76,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Implement haptic feedback on capture via Vibration API
 - [x] Build `<LocationStrip>` component: 3–5 quick-tap bubble buttons above shutter
 - [x] Create `trpc.locations.list` query returning user's locations sorted by `sortOrder`
-- [ ] Implement one-tap location assignment: tap bubble → call `trpc.items.assignLocation` → item filed
+- [x] Implement one-tap location assignment: tap bubble → call `trpc.items.assignLocation` → item filed
 - [ ] Build Unsorted Inbox page (`/inbox`): list items where `locationId IS NULL`
 - [ ] Add inbox badge showing count of unassigned items
 - [ ] Implement batch-assign prompt: "N items are homeless — all going to [last location]?" with confirm
