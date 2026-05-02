@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { assignLocation, buildCloudinaryUrl, captureItem, listInbox } from "./items";
+import { assignLocation, buildCloudinaryUrl, captureItem, countInbox, listInbox } from "./items";
 
 vi.stubEnv("CLOUDINARY_CLOUD_NAME", "test-cloud");
 
@@ -104,6 +104,48 @@ describe("captureItem", () => {
     });
 
     expect(db.select).not.toHaveBeenCalled();
+  });
+});
+
+describe("countInbox", () => {
+  const userId = "user-abc-123";
+
+  function createMockDb(countResult: number) {
+    return {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: countResult }]),
+        }),
+      }),
+    } as never;
+  }
+
+  it("returns the count of unassigned items", async () => {
+    const db = createMockDb(5);
+    const result = await countInbox(db, userId);
+
+    expect(result).toBe(5);
+    expect(db.select).toHaveBeenCalled();
+  });
+
+  it("returns 0 when no unassigned items exist", async () => {
+    const db = createMockDb(0);
+    const result = await countInbox(db, userId);
+
+    expect(result).toBe(0);
+  });
+
+  it("returns 0 when query returns empty array", async () => {
+    const db = {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    } as never;
+
+    const result = await countInbox(db, userId);
+    expect(result).toBe(0);
   });
 });
 

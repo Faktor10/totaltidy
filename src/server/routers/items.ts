@@ -1,12 +1,16 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { assignLocation, captureItem, listInbox } from "@/server/services/items";
+import { assignLocation, captureItem, countInbox, listInbox } from "@/server/services/items";
 import { protectedProcedure, router } from "@/server/trpc";
 
 export const itemsRouter = router({
   inbox: protectedProcedure.query(async ({ ctx }) => {
     return listInbox(db, ctx.userId);
+  }),
+
+  inboxCount: protectedProcedure.query(async ({ ctx }) => {
+    return countInbox(db, ctx.userId);
   }),
 
   capture: protectedProcedure
