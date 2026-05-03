@@ -5,6 +5,10 @@ vi.mock("@/lib/auth", () => ({
   auth: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("@/server/db", () => ({
+  db: {},
+}));
+
 const { createCaller } = await import("@/server/routers");
 
 describe("appRouter", () => {

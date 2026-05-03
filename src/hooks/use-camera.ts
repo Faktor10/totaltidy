@@ -6,8 +6,11 @@ export interface UseCameraOptions {
   facingMode?: "user" | "environment";
   width?: number;
   height?: number;
-  imageFormat?: "image/jpeg" | "image/png" | "image/webp";
-  imageQuality?: number;
+}
+
+export interface CaptureResult {
+  blob: Blob;
+  blobUrl: string;
 }
 
 export interface UseCameraReturn {
@@ -17,61 +20,41 @@ export interface UseCameraReturn {
   error: string | null;
   startCamera: () => Promise<void>;
   stopCamera: () => void;
-  captureFrame: () => Promise<Blob | null>;
+  captureFrame: () => Promise<CaptureResult | null>;
 }
 
-const DEFAULT_OPTIONS: Required<UseCameraOptions> = {
-  facingMode: "environment",
-  width: 1920,
-  height: 1080,
-  imageFormat: "image/jpeg",
-  imageQuality: 0.92,
-};
+export function buildConstraints(options: UseCameraOptions): MediaStreamConstraints {
+  const { facingMode = "environment", width, height } = options;
+  return {
+    video: {
+      facingMode,
+      ...(width ? { width: { ideal: width } } : {}),
+      ...(height ? { height: { ideal: height } } : {}),
+    },
+    audio: false,
+  };
+}
 
 export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
-  const resolved = { ...DEFAULT_OPTIONS, ...options };
-
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const stopCamera = useCallback(() => {
-    const stream = streamRef.current;
-    if (stream) {
-      for (const track of stream.getTracks()) {
-        track.stop();
-      }
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsStreaming(false);
-  }, []);
-
   const startCamera = useCallback(async () => {
-    setError(null);
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Camera access is not supported in this browser");
-      return;
-    }
-
-    stopCamera();
-
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: resolved.facingMode,
-          width: { ideal: resolved.width },
-          height: { ideal: resolved.height },
-        },
-        audio: false,
-      });
+      setError(null);
 
+      if (streamRef.current) {
+        for (const track of streamRef.current.getTracks()) {
+          track.stop();
+        }
+        streamRef.current = null;
+      }
+
+      const constraints = buildConstraints(options);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -81,47 +64,72 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
       setIsStreaming(true);
     } catch (err) {
-      const message =
-        err instanceof DOMException && err.name === "NotAllowedError"
-          ? "Camera permission was denied"
-          : err instanceof DOMException && err.name === "NotFoundError"
-            ? "No camera found on this device"
-            : "Failed to access camera";
+      if (streamRef.current) {
+        for (const track of streamRef.current.getTracks()) {
+          track.stop();
+        }
+        streamRef.current = null;
+      }
+      const message = err instanceof Error ? err.message : "Failed to access camera";
       setError(message);
+      setIsStreaming(false);
     }
-  }, [resolved.facingMode, resolved.width, resolved.height, stopCamera]);
+  }, [options]);
 
-  const captureFrame = useCallback(async (): Promise<Blob | null> => {
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) {
+        track.stop();
+      }
+      streamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setIsStreaming(false);
+  }, []);
+
+  const captureFrame = useCallback(async (): Promise<CaptureResult | null> => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
+    if (!video || !isStreaming) return null;
 
-    if (!video || !canvas || !isStreaming) {
-      return null;
+    if (!canvasRef.current) {
+      canvasRef.current = document.createElement("canvas");
     }
 
+    const canvas = canvasRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      return null;
-    }
+    if (!ctx) return null;
 
     ctx.drawImage(video, 0, 0);
 
-    return new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), resolved.imageFormat, resolved.imageQuality);
+    return new Promise<CaptureResult | null>((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+          const blobUrl = URL.createObjectURL(blob);
+          resolve({ blob, blobUrl });
+        },
+        "image/jpeg",
+        0.85,
+      );
     });
-  }, [isStreaming, resolved.imageFormat, resolved.imageQuality]);
+  }, [isStreaming]);
 
   useEffect(() => {
     return () => {
-      const stream = streamRef.current;
-      if (stream) {
-        for (const track of stream.getTracks()) {
+      if (streamRef.current) {
+        for (const track of streamRef.current.getTracks()) {
           track.stop();
         }
-        streamRef.current = null;
       }
     };
   }, []);

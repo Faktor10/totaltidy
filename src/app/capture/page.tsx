@@ -1,19 +1,38 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { CameraView } from "@/components/camera-view";
+import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
+import { trpc } from "@/lib/trpc";
 
 export default function CapturePage() {
-  const router = useRouter();
+  const { upload } = useCloudinaryUpload();
+  const captureItem = trpc.items.capture.useMutation();
+  const { data: locations } = trpc.locations.list.useQuery();
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
 
-  const handleCapture = useCallback((_blob: Blob) => {
-    // Upload to Cloudinary and persist via tRPC — wired in a later subtask
+  const handleCapture = useCallback(
+    async (blob: Blob) => {
+      const result = await upload(blob);
+      if (!result) return;
+      captureItem.mutate({
+        cloudinaryPublicId: result.public_id,
+        locationId: selectedLocationId ?? undefined,
+      });
+    },
+    [upload, captureItem, selectedLocationId],
+  );
+
+  const handleLocationSelect = useCallback((locationId: string) => {
+    setSelectedLocationId((prev) => (prev === locationId ? null : locationId));
   }, []);
 
-  const handleClose = useCallback(() => {
-    router.back();
-  }, [router]);
-
-  return <CameraView onCapture={handleCapture} onClose={handleClose} />;
+  return (
+    <CameraView
+      onCapture={handleCapture}
+      locations={locations}
+      selectedLocationId={selectedLocationId}
+      onLocationSelect={handleLocationSelect}
+    />
+  );
 }
