@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
 
@@ -45,6 +45,23 @@ export async function captureItem(
   return item;
 }
 
+export async function countInbox(db: Database, userId: string) {
+  const [result] = await db
+    .select({ count: count() })
+    .from(items)
+    .where(and(eq(items.userId, userId), isNull(items.locationId)));
+
+  return result?.count ?? 0;
+}
+
+export async function listInbox(db: Database, userId: string) {
+  return db
+    .select()
+    .from(items)
+    .where(and(eq(items.userId, userId), isNull(items.locationId)))
+    .orderBy(desc(items.createdAt));
+}
+
 export async function assignLocation(
   db: Database,
   userId: string,
@@ -73,14 +90,6 @@ export async function assignLocation(
     .set({ locationId: input.locationId })
     .where(and(eq(items.id, input.itemId), eq(items.userId, userId)))
     .returning();
-
-  await db
-    .update(locations)
-    .set({
-      lastUsedAt: new Date(),
-      useCount: sql`${locations.useCount} + 1`,
-    })
-    .where(eq(locations.id, input.locationId));
 
   return updated;
 }

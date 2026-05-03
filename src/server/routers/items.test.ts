@@ -5,9 +5,13 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockCaptureItem = vi.fn();
+const mockCountInbox = vi.fn();
 const mockAssignLocation = vi.fn();
+const mockListInbox = vi.fn();
 vi.mock("@/server/services/items", () => ({
   captureItem: (...args: unknown[]) => mockCaptureItem(...args),
+  countInbox: (...args: unknown[]) => mockCountInbox(...args),
+  listInbox: (...args: unknown[]) => mockListInbox(...args),
   assignLocation: (...args: unknown[]) => mockAssignLocation(...args),
 }));
 
@@ -105,6 +109,32 @@ describe("items.capture", () => {
   });
 });
 
+describe("items.inboxCount", () => {
+  it("throws UNAUTHORIZED when no session", async () => {
+    const caller = createCaller(unauthenticatedCtx);
+    await expect(caller.items.inboxCount()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("returns count from countInbox service", async () => {
+    mockCountInbox.mockResolvedValueOnce(7);
+
+    const caller = createCaller(authenticatedCtx);
+    const result = await caller.items.inboxCount();
+
+    expect(result).toBe(7);
+    expect(mockCountInbox).toHaveBeenCalledWith(expect.anything(), "user-123");
+  });
+
+  it("returns 0 when no unassigned items", async () => {
+    mockCountInbox.mockResolvedValueOnce(0);
+
+    const caller = createCaller(authenticatedCtx);
+    const result = await caller.items.inboxCount();
+
+    expect(result).toBe(0);
+  });
+});
+
 describe("items.assignLocation", () => {
   const validItemId = "550e8400-e29b-41d4-a716-446655440000";
   const validLocationId = "660e8400-e29b-41d4-a716-446655440000";
@@ -117,8 +147,8 @@ describe("items.assignLocation", () => {
   });
 
   it("calls assignLocation service with correct args", async () => {
-    const mockUpdated = { id: validItemId, locationId: validLocationId, status: "inbox" };
-    mockAssignLocation.mockResolvedValueOnce(mockUpdated);
+    const mockResult = { id: validItemId, locationId: validLocationId, status: "inbox" };
+    mockAssignLocation.mockResolvedValueOnce(mockResult);
 
     const caller = createCaller(authenticatedCtx);
     const result = await caller.items.assignLocation({
@@ -126,7 +156,7 @@ describe("items.assignLocation", () => {
       locationId: validLocationId,
     });
 
-    expect(result).toEqual(mockUpdated);
+    expect(result).toEqual(mockResult);
     expect(mockAssignLocation).toHaveBeenCalledWith(expect.anything(), "user-123", {
       itemId: validItemId,
       locationId: validLocationId,
@@ -139,7 +169,7 @@ describe("items.assignLocation", () => {
     const caller = createCaller(authenticatedCtx);
     await expect(
       caller.items.assignLocation({ itemId: validItemId, locationId: validLocationId }),
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    ).rejects.toMatchObject({ code: "NOT_FOUND", message: "Location not found" });
   });
 
   it("throws NOT_FOUND when service throws Item not found", async () => {
@@ -148,7 +178,7 @@ describe("items.assignLocation", () => {
     const caller = createCaller(authenticatedCtx);
     await expect(
       caller.items.assignLocation({ itemId: validItemId, locationId: validLocationId }),
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    ).rejects.toMatchObject({ code: "NOT_FOUND", message: "Item not found" });
   });
 
   it("rejects invalid itemId format", async () => {

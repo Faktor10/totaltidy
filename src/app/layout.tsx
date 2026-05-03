@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BottomNav } from "@/components/bottom-nav";
 import { TRPCProvider } from "./providers";
 import "./globals.css";
 
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <TRPCProvider>{children}</TRPCProvider>
+        <TRPCProvider>
+          {children}
+          <BottomNav />
+        </TRPCProvider>
       </body>
     </html>
   );

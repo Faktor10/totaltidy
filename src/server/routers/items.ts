@@ -1,10 +1,18 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { assignLocation, captureItem } from "@/server/services/items";
+import { assignLocation, captureItem, countInbox, listInbox } from "@/server/services/items";
 import { protectedProcedure, router } from "@/server/trpc";
 
 export const itemsRouter = router({
+  inbox: protectedProcedure.query(async ({ ctx }) => {
+    return listInbox(db, ctx.userId);
+  }),
+
+  inboxCount: protectedProcedure.query(async ({ ctx }) => {
+    return countInbox(db, ctx.userId);
+  }),
+
   capture: protectedProcedure
     .input(
       z.object({
@@ -38,10 +46,16 @@ export const itemsRouter = router({
         return await assignLocation(db, ctx.userId, input);
       } catch (error) {
         if (error instanceof Error) {
-          if (error.message === "Location not found" || error.message === "Item not found") {
+          if (error.message === "Location not found") {
             throw new TRPCError({
               code: "NOT_FOUND",
-              message: error.message,
+              message: "Location not found",
+            });
+          }
+          if (error.message === "Item not found") {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Item not found",
             });
           }
         }
