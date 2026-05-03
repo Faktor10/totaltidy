@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
 
@@ -45,7 +45,16 @@ export async function captureItem(
   return item;
 }
 
-export async function listUnsortedItems(db: Database, userId: string) {
+export async function countInbox(db: Database, userId: string) {
+  const [result] = await db
+    .select({ count: count() })
+    .from(items)
+    .where(and(eq(items.userId, userId), isNull(items.locationId)));
+
+  return result?.count ?? 0;
+}
+
+export async function listInbox(db: Database, userId: string) {
   return db
     .select()
     .from(items)

@@ -6,61 +6,66 @@ import { trpc } from "@/lib/trpc";
 import styles from "./inbox.module.css";
 
 export default function InboxPage() {
-  const { data: items, isLoading } = trpc.items.listUnsorted.useQuery();
+  const { data: items, isLoading, error, refetch } = trpc.items.inbox.useQuery();
 
   if (isLoading) {
     return (
       <main className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Unsorted Items</h1>
-        </header>
-        <div className={styles.grid} data-testid="inbox-loading">
-          <div key="s1" className={styles.shimmer} />
-          <div key="s2" className={styles.shimmer} />
-          <div key="s3" className={styles.shimmer} />
-          <div key="s4" className={styles.shimmer} />
-          <div key="s5" className={styles.shimmer} />
-          <div key="s6" className={styles.shimmer} />
+        <div className={styles.loading}>Loading inbox...</div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.error}>
+          <p>Failed to load inbox</p>
+          <button type="button" className={styles.retryButton} onClick={() => refetch()}>
+            Retry
+          </button>
         </div>
       </main>
     );
   }
 
-  const count = items?.length ?? 0;
-
   return (
-    <main className={styles.page} data-testid="inbox-page">
-      <header className={styles.header}>
-        <h1 className={styles.title}>Unsorted Items</h1>
-        <span className={styles.count} data-testid="inbox-count">
-          {count} {count === 1 ? "item" : "items"}
-        </span>
-      </header>
+    <main className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
+          Unsorted <span className={styles.count}>({items?.length ?? 0})</span>
+        </h1>
+        <Link href="/capture" className={styles.captureLink}>
+          + Capture
+        </Link>
+      </div>
 
-      {count === 0 ? (
-        <div className={styles.empty} data-testid="inbox-empty">
-          <p className={styles.emptyText}>Nothing here — all items have a home!</p>
-          <Link href="/capture" className={styles.captureLink}>
-            Capture items
-          </Link>
+      {items && items.length > 0 ? (
+        <div className={styles.grid} data-testid="inbox-grid">
+          {items.map((item) => (
+            <div key={item.id} className={styles.card} data-testid="inbox-item">
+              <Image
+                src={item.processedImageUrl ?? item.originalImageUrl}
+                alt={item.label ?? "Unsorted item"}
+                className={styles.image}
+                fill
+                sizes="(max-width: 640px) 50vw, 140px"
+              />
+              {item.label && <span className={styles.itemLabel}>{item.label}</span>}
+            </div>
+          ))}
         </div>
       ) : (
-        <ul className={styles.grid} data-testid="inbox-grid">
-          {items?.map((item) => (
-            <li key={item.id} className={styles.card} data-testid="inbox-item">
-              <div className={styles.imageWrapper}>
-                <Image
-                  src={item.processedImageUrl ?? item.originalImageUrl}
-                  alt={item.label ?? "Unsorted item"}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className={styles.image}
-                />
-              </div>
-              {item.label && <span className={styles.label}>{item.label}</span>}
-            </li>
-          ))}
-        </ul>
+        <div className={styles.empty}>
+          <span className={styles.emptyIcon}>&#x1F4E5;</span>
+          <p className={styles.emptyTitle}>Inbox zero!</p>
+          <p className={styles.emptyText}>
+            All your items have a home. Capture more items to get started.
+          </p>
+          <Link href="/capture" className={styles.captureLink}>
+            + Capture items
+          </Link>
+        </div>
       )}
     </main>
   );

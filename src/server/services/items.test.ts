@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { assignLocation, buildCloudinaryUrl, captureItem } from "./items";
+import { assignLocation, buildCloudinaryUrl, captureItem, countInbox, listInbox } from "./items";
 
 vi.stubEnv("CLOUDINARY_CLOUD_NAME", "test-cloud");
 
@@ -104,6 +104,120 @@ describe("captureItem", () => {
     });
 
     expect(db.select).not.toHaveBeenCalled();
+  });
+});
+
+describe("countInbox", () => {
+  const userId = "user-abc-123";
+
+  function createMockDb(countResult: number) {
+    return {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: countResult }]),
+        }),
+      }),
+    } as never;
+  }
+
+  it("returns the count of unassigned items", async () => {
+    const db = createMockDb(5);
+    const result = await countInbox(db, userId);
+
+    expect(result).toBe(5);
+    expect(db.select).toHaveBeenCalled();
+  });
+
+  it("returns 0 when no unassigned items exist", async () => {
+    const db = createMockDb(0);
+    const result = await countInbox(db, userId);
+
+    expect(result).toBe(0);
+  });
+
+  it("returns 0 when query returns empty array", async () => {
+    const db = {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    } as never;
+
+    const result = await countInbox(db, userId);
+    expect(result).toBe(0);
+  });
+});
+
+describe("listInbox", () => {
+  const userId = "user-abc-123";
+  const inboxItems = [
+    {
+      id: "item-001",
+      userId,
+      cloudinaryPublicId: "totaltidy/photo1",
+      originalImageUrl: "https://res.cloudinary.com/test-cloud/image/upload/totaltidy/photo1",
+      processedImageUrl: null,
+      locationId: null,
+      captureSessionId: null,
+      label: null,
+      tags: null,
+      category: null,
+      status: "inbox" as const,
+      createdAt: new Date("2025-01-02"),
+      updatedAt: new Date("2025-01-02"),
+    },
+    {
+      id: "item-002",
+      userId,
+      cloudinaryPublicId: "totaltidy/photo2",
+      originalImageUrl: "https://res.cloudinary.com/test-cloud/image/upload/totaltidy/photo2",
+      processedImageUrl: null,
+      locationId: null,
+      captureSessionId: null,
+      label: "Toy car",
+      tags: null,
+      category: null,
+      status: "inbox" as const,
+      createdAt: new Date("2025-01-01"),
+      updatedAt: new Date("2025-01-01"),
+    },
+  ];
+
+  function createMockDb(selectResult: unknown[] = inboxItems) {
+    return {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue(selectResult),
+          }),
+        }),
+      }),
+    } as never;
+  }
+
+  it("returns items with no location assigned", async () => {
+    const db = createMockDb();
+    const result = await listInbox(db, userId);
+
+    expect(result).toEqual(inboxItems);
+    expect(result).toHaveLength(2);
+    expect(db.select).toHaveBeenCalled();
+  });
+
+  it("returns empty array when no unsorted items exist", async () => {
+    const db = createMockDb([]);
+    const result = await listInbox(db, userId);
+
+    expect(result).toEqual([]);
+    expect(result).toHaveLength(0);
+  });
+
+  it("calls select with correct chain", async () => {
+    const db = createMockDb();
+    await listInbox(db, userId);
+
+    expect(db.select).toHaveBeenCalled();
   });
 });
 

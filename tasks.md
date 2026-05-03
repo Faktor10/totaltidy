@@ -78,7 +78,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Create `trpc.locations.list` query returning user's locations sorted by `sortOrder`
 - [x] Implement one-tap location assignment: tap bubble → call `trpc.items.assignLocation` → item filed
 - [x] Build Unsorted Inbox page (`/inbox`): list items where `locationId IS NULL`
-- [ ] Add inbox badge showing count of unassigned items
+- [x] Add inbox badge showing count of unassigned items
 - [ ] Implement batch-assign prompt: "N items are homeless — all going to [last location]?" with confirm
 - [ ] Write Vitest unit tests for `itemsService.captureItem` and `locationsService.list`
 - [ ] Write Playwright E2E test: open camera → capture item → appears in inbox
