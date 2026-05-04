@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { assignLocation, buildCloudinaryUrl, captureItem, countInbox, listInbox } from "./items";
+import {
+  assignLocation,
+  batchAssignLocation,
+  buildCloudinaryUrl,
+  captureItem,
+  countInbox,
+  listInbox,
+} from "./items";
 
 vi.stubEnv("CLOUDINARY_CLOUD_NAME", "test-cloud");
 
@@ -306,5 +313,80 @@ describe("assignLocation", () => {
       "Location not found",
     );
     expect(db.select).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("batchAssignLocation", () => {
+  const userId = "user-abc-123";
+  const locationId = "loc-001";
+
+  function createMockDb(overrides?: {
+    locationSelectResult?: unknown[];
+    inboxSelectResult?: unknown[];
+  }) {
+    const locationSelectResult = overrides?.locationSelectResult ?? [{ id: locationId }];
+    const inboxSelectResult = overrides?.inboxSelectResult ?? [
+      { id: "item-001" },
+      { id: "item-002" },
+      { id: "item-003" },
+    ];
+
+    let selectCallCount = 0;
+    const selectResults = [locationSelectResult, inboxSelectResult];
+
+    return {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() => {
+            const result = selectResults[selectCallCount] ?? [];
+            selectCallCount++;
+            return Promise.resolve(result);
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
+    } as never;
+  }
+
+  it("assigns all inbox items to the given location", async () => {
+    const db = createMockDb();
+    const result = await batchAssignLocation(db, userId, locationId);
+
+    expect(result).toEqual({ count: 3 });
+    expect(db.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns count 0 when inbox is empty", async () => {
+    const db = createMockDb({ inboxSelectResult: [] });
+    const result = await batchAssignLocation(db, userId, locationId);
+
+    expect(result).toEqual({ count: 0 });
+    expect(db.update).not.toHaveBeenCalled();
+  });
+
+  it("throws when location does not belong to user", async () => {
+    const db = createMockDb({ locationSelectResult: [] });
+
+    await expect(batchAssignLocation(db, userId, locationId)).rejects.toThrow("Location not found");
+    expect(db.update).not.toHaveBeenCalled();
+  });
+
+  it("updates location stats after assigning items", async () => {
+    const db = createMockDb();
+    await batchAssignLocation(db, userId, locationId);
+
+    expect(db.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("handles a single inbox item", async () => {
+    const db = createMockDb({ inboxSelectResult: [{ id: "item-solo" }] });
+    const result = await batchAssignLocation(db, userId, locationId);
+
+    expect(result).toEqual({ count: 1 });
+    expect(db.update).toHaveBeenCalledTimes(2);
   });
 });
