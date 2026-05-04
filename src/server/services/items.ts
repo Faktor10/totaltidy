@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
 
@@ -92,4 +92,41 @@ export async function assignLocation(
     .returning();
 
   return updated;
+}
+
+export async function batchAssignLocation(db: Database, userId: string, locationId: string) {
+  const [location] = await db
+    .select({ id: locations.id })
+    .from(locations)
+    .where(and(eq(locations.id, locationId), eq(locations.userId, userId)));
+
+  if (!location) {
+    throw new Error("Location not found");
+  }
+
+  const inboxItems = await db
+    .select({ id: items.id })
+    .from(items)
+    .where(and(eq(items.userId, userId), isNull(items.locationId)));
+
+  if (inboxItems.length === 0) {
+    return { count: 0 };
+  }
+
+  const itemIds = inboxItems.map((i) => i.id);
+
+  await db
+    .update(items)
+    .set({ locationId })
+    .where(and(eq(items.userId, userId), inArray(items.id, itemIds)));
+
+  await db
+    .update(locations)
+    .set({
+      lastUsedAt: new Date(),
+      useCount: sql`${locations.useCount} + ${inboxItems.length}`,
+    })
+    .where(and(eq(locations.id, locationId), eq(locations.userId, userId)));
+
+  return { count: inboxItems.length };
 }
