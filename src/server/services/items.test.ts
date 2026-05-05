@@ -53,6 +53,11 @@ describe("captureItem", () => {
           returning: vi.fn().mockResolvedValue(insertResult),
         }),
       }),
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
     } as never;
   }
 
