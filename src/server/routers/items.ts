@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/server/db";
 import {
   assignLocation,
-  batchAssignToLocation,
+  batchAssignLocation,
   captureItem,
   countInbox,
   listInbox,
@@ -69,7 +69,7 @@ export const itemsRouter = router({
       }
     }),
 
-  batchAssign: protectedProcedure
+  batchAssignLocation: protectedProcedure
     .input(
       z.object({
         locationId: z.string().uuid(),
@@ -77,7 +77,7 @@ export const itemsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        return await batchAssignToLocation(db, ctx.userId, input.locationId);
+        return await batchAssignLocation(db, ctx.userId, input.locationId);
       } catch (error) {
         if (error instanceof Error && error.message === "Location not found") {
           throw new TRPCError({

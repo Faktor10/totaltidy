@@ -5,33 +5,37 @@ import { trpc } from "@/lib/trpc";
 import styles from "./batch-assign-prompt.module.css";
 
 export interface BatchAssignPromptProps {
-  itemCount: number;
+  inboxCount: number;
+  locationId: string;
+  locationName: string;
   onAssigned: () => void;
 }
 
-export function BatchAssignPrompt({ itemCount, onAssigned }: BatchAssignPromptProps) {
+export function BatchAssignPrompt({
+  inboxCount,
+  locationId,
+  locationName,
+  onAssigned,
+}: BatchAssignPromptProps) {
   const [dismissed, setDismissed] = useState(false);
-  const { data: lastLocation, isLoading } = trpc.locations.lastUsed.useQuery();
-  const batchAssign = trpc.items.batchAssign.useMutation({
+  const batchAssign = trpc.items.batchAssignLocation.useMutation({
     onSuccess: () => onAssigned(),
   });
 
-  if (dismissed || isLoading || !lastLocation || itemCount === 0) {
-    return null;
-  }
+  if (dismissed || inboxCount === 0) return null;
 
   return (
-    <div className={styles.prompt} data-testid="batch-assign-prompt">
-      <p className={styles.message}>
-        {itemCount} {itemCount === 1 ? "item is" : "items are"} homeless &mdash; all going to{" "}
-        <span className={styles.locationName}>{lastLocation.name}</span>?
-      </p>
+    <div className={styles.banner} data-testid="batch-assign-prompt">
+      <span className={styles.text}>
+        {inboxCount} {inboxCount === 1 ? "item is" : "items are"} homeless &mdash; all going to{" "}
+        <span className={styles.locationName}>{locationName}</span>?
+      </span>
       <div className={styles.actions}>
         <button
           type="button"
           className={styles.confirmButton}
           disabled={batchAssign.isPending}
-          onClick={() => batchAssign.mutate({ locationId: lastLocation.id })}
+          onClick={() => batchAssign.mutate({ locationId })}
           data-testid="batch-assign-confirm"
         >
           {batchAssign.isPending ? "Assigning..." : "Yes"}

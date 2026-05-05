@@ -8,6 +8,8 @@ import styles from "./inbox.module.css";
 
 export default function InboxPage() {
   const { data: items, isLoading, error, refetch } = trpc.items.inbox.useQuery();
+  const { data: lastLocation } = trpc.locations.lastUsed.useQuery();
+  const utils = trpc.useUtils();
 
   if (isLoading) {
     return (
@@ -41,8 +43,16 @@ export default function InboxPage() {
         </Link>
       </div>
 
-      {items && items.length > 0 && (
-        <BatchAssignPrompt itemCount={items.length} onAssigned={() => refetch()} />
+      {items && items.length > 0 && lastLocation && (
+        <BatchAssignPrompt
+          inboxCount={items.length}
+          locationId={lastLocation.id}
+          locationName={lastLocation.name}
+          onAssigned={() => {
+            void refetch();
+            void utils.items.inboxCount.invalidate();
+          }}
+        />
       )}
 
       {items && items.length > 0 ? (
