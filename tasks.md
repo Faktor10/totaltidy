@@ -79,7 +79,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Implement one-tap location assignment: tap bubble → call `trpc.items.assignLocation` → item filed
 - [x] Build Unsorted Inbox page (`/inbox`): list items where `locationId IS NULL`
 - [x] Add inbox badge showing count of unassigned items
-- [ ] Implement batch-assign prompt: "N items are homeless — all going to [last location]?" with confirm
+- [x] Implement batch-assign prompt: "N items are homeless — all going to [last location]?" with confirm
 - [ ] Write Vitest unit tests for `itemsService.captureItem` and `locationsService.list`
 - [ ] Write Playwright E2E test: open camera → capture item → appears in inbox
 - [ ] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.2 PR**

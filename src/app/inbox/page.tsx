@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { BatchAssignPrompt } from "@/components/batch-assign-prompt";
 import { trpc } from "@/lib/trpc";
 import styles from "./inbox.module.css";
 
@@ -39,6 +40,10 @@ export default function InboxPage() {
           + Capture
         </Link>
       </div>
+
+      {items && items.length > 0 && (
+        <BatchAssignPrompt itemCount={items.length} onAssigned={() => refetch()} />
+      )}
 
       {items && items.length > 0 ? (
         <div className={styles.grid} data-testid="inbox-grid">

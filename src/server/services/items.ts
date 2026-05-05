@@ -93,3 +93,22 @@ export async function assignLocation(
 
   return updated;
 }
+
+export async function batchAssignToLocation(db: Database, userId: string, locationId: string) {
+  const [location] = await db
+    .select({ id: locations.id })
+    .from(locations)
+    .where(and(eq(locations.id, locationId), eq(locations.userId, userId)));
+
+  if (!location) {
+    throw new Error("Location not found");
+  }
+
+  const updated = await db
+    .update(items)
+    .set({ locationId })
+    .where(and(eq(items.userId, userId), isNull(items.locationId)))
+    .returning({ id: items.id });
+
+  return { assignedCount: updated.length };
+}

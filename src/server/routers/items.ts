@@ -1,7 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { assignLocation, captureItem, countInbox, listInbox } from "@/server/services/items";
+import {
+  assignLocation,
+  batchAssignToLocation,
+  captureItem,
+  countInbox,
+  listInbox,
+} from "@/server/services/items";
 import { protectedProcedure, router } from "@/server/trpc";
 
 export const itemsRouter = router({
@@ -58,6 +64,26 @@ export const itemsRouter = router({
               message: "Item not found",
             });
           }
+        }
+        throw error;
+      }
+    }),
+
+  batchAssign: protectedProcedure
+    .input(
+      z.object({
+        locationId: z.string().uuid(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await batchAssignToLocation(db, ctx.userId, input.locationId);
+      } catch (error) {
+        if (error instanceof Error && error.message === "Location not found") {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Location not found",
+          });
         }
         throw error;
       }
