@@ -2,6 +2,13 @@ import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
 
+async function touchLocation(db: Database, locationId: string) {
+  await db
+    .update(locations)
+    .set({ lastUsedAt: new Date(), useCount: sql`${locations.useCount} + 1` })
+    .where(eq(locations.id, locationId));
+}
+
 export function buildCloudinaryUrl(publicId: string): string {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   if (!cloudName) {
@@ -41,6 +48,10 @@ export async function captureItem(
       status: "inbox",
     })
     .returning();
+
+  if (input.locationId) {
+    await touchLocation(db, input.locationId);
+  }
 
   return item;
 }
@@ -90,6 +101,8 @@ export async function assignLocation(
     .set({ locationId: input.locationId })
     .where(and(eq(items.id, input.itemId), eq(items.userId, userId)))
     .returning();
+
+  await touchLocation(db, input.locationId);
 
   return updated;
 }
