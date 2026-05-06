@@ -88,7 +88,7 @@ This file is the source of truth for build progress. Keep it up to date.
 
 ### Milestone 1.3 — The Vanish Studio (Weeks 5–6)
 
-- [ ] Enable Cloudinary Background Removal add-on (`ai_background_removal`) on upload
+- [x] Enable Cloudinary Background Removal add-on (`ai_background_removal`) on upload
 - [ ] Handle Cloudinary webhook: `background_removal` notification → update `processedImageUrl` in DB
 - [ ] Implement gallery polling: tRPC query with `refetchInterval` swaps dirty image for clean one when ready
 - [ ] Enable Cloudinary auto-tagging add-on (Imagga or Google)
