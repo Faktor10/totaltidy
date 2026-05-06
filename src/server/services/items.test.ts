@@ -6,6 +6,7 @@ import {
   captureItem,
   countInbox,
   listInbox,
+  listItems,
 } from "./items";
 
 vi.stubEnv("CLOUDINARY_CLOUD_NAME", "test-cloud");
@@ -230,6 +231,80 @@ describe("listInbox", () => {
     await listInbox(db, userId);
 
     expect(db.select).toHaveBeenCalled();
+  });
+});
+
+describe("listItems", () => {
+  const userId = "user-abc-123";
+  const allItems = [
+    {
+      id: "item-001",
+      userId,
+      cloudinaryPublicId: "totaltidy/photo1",
+      originalImageUrl: "https://res.cloudinary.com/test-cloud/image/upload/totaltidy/photo1",
+      processedImageUrl:
+        "https://res.cloudinary.com/test-cloud/image/upload/e_background_removal/totaltidy/photo1",
+      locationId: "loc-001",
+      captureSessionId: null,
+      label: "Toy car",
+      tags: null,
+      category: null,
+      status: "inbox" as const,
+      createdAt: new Date("2025-01-02"),
+      updatedAt: new Date("2025-01-02"),
+    },
+    {
+      id: "item-002",
+      userId,
+      cloudinaryPublicId: "totaltidy/photo2",
+      originalImageUrl: "https://res.cloudinary.com/test-cloud/image/upload/totaltidy/photo2",
+      processedImageUrl: null,
+      locationId: null,
+      captureSessionId: null,
+      label: null,
+      tags: null,
+      category: null,
+      status: "inbox" as const,
+      createdAt: new Date("2025-01-01"),
+      updatedAt: new Date("2025-01-01"),
+    },
+  ];
+
+  function createMockDb(selectResult: unknown[] = allItems) {
+    return {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue(selectResult),
+          }),
+        }),
+      }),
+    } as never;
+  }
+
+  it("returns all items for the user", async () => {
+    const db = createMockDb();
+    const result = await listItems(db, userId);
+
+    expect(result).toEqual(allItems);
+    expect(result).toHaveLength(2);
+    expect(db.select).toHaveBeenCalled();
+  });
+
+  it("includes items with and without processed images", async () => {
+    const db = createMockDb();
+    const result = await listItems(db, userId);
+
+    expect(result[0].processedImageUrl).not.toBeNull();
+    expect(result[1].processedImageUrl).toBeNull();
+  });
+
+  it("returns empty array when user has no items", async () => {
+    const db = createMockDb([]);
+    const result = await listItems(db, userId);
+
+    expect(result).toEqual([]);
+    expect(result).toHaveLength(0);
   });
 });
 

@@ -59,6 +59,10 @@ export async function captureItem(
   return item;
 }
 
+export async function listItems(db: Database, userId: string) {
+  return db.select().from(items).where(eq(items.userId, userId)).orderBy(desc(items.createdAt));
+}
+
 export async function countInbox(db: Database, userId: string) {
   const [result] = await db
     .select({ count: count() })

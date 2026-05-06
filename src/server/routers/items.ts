@@ -7,10 +7,15 @@ import {
   captureItem,
   countInbox,
   listInbox,
+  listItems,
 } from "@/server/services/items";
 import { protectedProcedure, router } from "@/server/trpc";
 
 export const itemsRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    return listItems(db, ctx.userId);
+  }),
+
   inbox: protectedProcedure.query(async ({ ctx }) => {
     return listInbox(db, ctx.userId);
   }),

@@ -90,7 +90,7 @@ This file is the source of truth for build progress. Keep it up to date.
 
 - [x] Enable Cloudinary Background Removal add-on (`ai_background_removal`) on upload
 - [x] Handle Cloudinary webhook: `background_removal` notification → update `processedImageUrl` in DB
-- [ ] Implement gallery polling: tRPC query with `refetchInterval` swaps dirty image for clean one when ready
+- [x] Implement gallery polling: tRPC query with `refetchInterval` swaps dirty image for clean one when ready
 - [ ] Enable Cloudinary auto-tagging add-on (Imagga or Google)
 - [ ] Handle Cloudinary webhook: `auto_tagging` notification → write `label` + `tags` JSONB to DB
 - [ ] Build clean gallery page (`/gallery`): studio-white grid of processed images, grouped by location
