@@ -82,7 +82,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Implement batch-assign prompt: "N items are homeless — all going to [last location]?" with confirm
 - [x] Write Vitest unit tests for `itemsService.captureItem` and `locationsService.list`
 - [x] Write Playwright E2E test: open camera → capture item → appears in inbox
-- [ ] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.2 PR**
+- [x] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.2 PR**
 
 ---
 
