@@ -1,11 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
+const { mockHandleBackgroundRemoval } = vi.hoisted(() => ({
+  mockHandleBackgroundRemoval: vi.fn().mockResolvedValue({ updated: true }),
+}));
+
+vi.mock("@/server/db", () => ({
+  db: {},
+}));
+
 vi.mock("@/server/services/cloudinary-webhook", () => ({
   verifyWebhookSignature: vi.fn(
     (_body: string, _timestamp: number, signature: string) => signature === "valid-sig",
   ),
   parseWebhookPayload: vi.fn((body: unknown) => body),
+  handleBackgroundRemoval: mockHandleBackgroundRemoval,
 }));
 
 function makeRequest(body: string, headers: Record<string, string> = {}) {
@@ -73,7 +82,8 @@ describe("POST /api/webhooks/cloudinary", () => {
     expect(json.error).toBe("Invalid payload");
   });
 
-  it("returns 200 for valid webhook with background_removal type", async () => {
+  it("returns 200 and calls handleBackgroundRemoval for background_removal type", async () => {
+    mockHandleBackgroundRemoval.mockClear();
     const body = JSON.stringify({
       notification_type: "background_removal",
       public_id: "totaltidy/abc123",
@@ -89,9 +99,33 @@ describe("POST /api/webhooks/cloudinary", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.received).toBe(true);
+    expect(mockHandleBackgroundRemoval).toHaveBeenCalledWith(
+      expect.anything(),
+      "totaltidy/abc123",
+      "https://res.cloudinary.com/demo/image/upload/totaltidy/abc123.jpg",
+    );
+  });
+
+  it("does not call handleBackgroundRemoval for non-background_removal types", async () => {
+    mockHandleBackgroundRemoval.mockClear();
+    const body = JSON.stringify({
+      notification_type: "info",
+      public_id: "totaltidy/xyz",
+      secure_url: "https://example.com/img.jpg",
+      resource_type: "image",
+    });
+    const res = await POST(
+      makeRequest(body, {
+        "x-cld-signature": "valid-sig",
+        "x-cld-timestamp": "1234567890",
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockHandleBackgroundRemoval).not.toHaveBeenCalled();
   });
 
   it("returns 200 for valid webhook with unknown notification type", async () => {
+    mockHandleBackgroundRemoval.mockClear();
     const body = JSON.stringify({
       notification_type: "unknown_event",
       public_id: "totaltidy/xyz",
@@ -105,5 +139,6 @@ describe("POST /api/webhooks/cloudinary", () => {
       }),
     );
     expect(res.status).toBe(200);
+    expect(mockHandleBackgroundRemoval).not.toHaveBeenCalled();
   });
 });

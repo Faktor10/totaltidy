@@ -1,4 +1,7 @@
+import { eq } from "drizzle-orm";
 import { cloudinary } from "@/lib/cloudinary";
+import type { Database } from "@/server/db";
+import { items } from "@/server/db/schema";
 
 export interface CloudinaryWebhookPayload {
   notification_type: string;
@@ -14,6 +17,20 @@ export function verifyWebhookSignature(
   signature: string,
 ): boolean {
   return cloudinary.utils.verifyNotificationSignature(body, timestamp, signature);
+}
+
+export async function handleBackgroundRemoval(
+  db: Database,
+  publicId: string,
+  processedUrl: string,
+): Promise<{ updated: boolean }> {
+  const result = await db
+    .update(items)
+    .set({ processedImageUrl: processedUrl })
+    .where(eq(items.cloudinaryPublicId, publicId))
+    .returning({ id: items.id });
+
+  return { updated: result.length > 0 };
 }
 
 export function parseWebhookPayload(body: unknown): CloudinaryWebhookPayload {
