@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseWebhookPayload, verifyWebhookSignature } from "./cloudinary-webhook";
+import {
+  handleBackgroundRemoval,
+  parseWebhookPayload,
+  verifyWebhookSignature,
+} from "./cloudinary-webhook";
 
 vi.mock("@/lib/cloudinary", () => ({
   cloudinary: {
@@ -18,6 +22,48 @@ describe("verifyWebhookSignature", () => {
 
   it("returns false for an invalid signature", () => {
     expect(verifyWebhookSignature("{}", 1234567890, "bad-signature")).toBe(false);
+  });
+});
+
+describe("handleBackgroundRemoval", () => {
+  const publicId = "totaltidy/abc123";
+  const processedUrl =
+    "https://res.cloudinary.com/demo/image/upload/e_background_removal/totaltidy/abc123.jpg";
+
+  function createMockDb(updateResult: unknown[] = [{ id: "item-001" }]) {
+    return {
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue(updateResult),
+          }),
+        }),
+      }),
+    } as never;
+  }
+
+  it("updates processedImageUrl for matching item", async () => {
+    const db = createMockDb();
+    const result = await handleBackgroundRemoval(db, publicId, processedUrl);
+
+    expect(result).toEqual({ updated: true });
+    expect(db.update).toHaveBeenCalled();
+  });
+
+  it("returns updated false when no item matches the public ID", async () => {
+    const db = createMockDb([]);
+    const result = await handleBackgroundRemoval(db, publicId, processedUrl);
+
+    expect(result).toEqual({ updated: false });
+    expect(db.update).toHaveBeenCalled();
+  });
+
+  it("passes the correct processedUrl to the update", async () => {
+    const db = createMockDb();
+    await handleBackgroundRemoval(db, publicId, processedUrl);
+
+    const setCall = db.update().set;
+    expect(setCall).toHaveBeenCalledWith({ processedImageUrl: processedUrl });
   });
 });
 

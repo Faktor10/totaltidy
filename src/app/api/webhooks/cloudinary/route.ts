@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { parseWebhookPayload, verifyWebhookSignature } from "@/server/services/cloudinary-webhook";
+import { db } from "@/server/db";
+import {
+  handleBackgroundRemoval,
+  parseWebhookPayload,
+  verifyWebhookSignature,
+} from "@/server/services/cloudinary-webhook";
 
 export async function POST(request: Request) {
   const signature = request.headers.get("x-cld-signature");
@@ -31,8 +36,9 @@ export async function POST(request: Request) {
 
   switch (payload.notification_type) {
     case "background_removal":
+      await handleBackgroundRemoval(db, payload.public_id, payload.secure_url);
+      break;
     case "info":
-      // Processing handlers will be added in Milestone 1.3
       break;
     default:
       break;
