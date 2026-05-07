@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
 import {
@@ -153,4 +153,24 @@ export async function batchAssignLocation(db: Database, userId: string, location
     .where(and(eq(locations.id, locationId), eq(locations.userId, userId)));
 
   return { count: inboxItems.length };
+}
+
+export async function listGalleryItems(db: Database, userId: string) {
+  return db
+    .select({
+      id: items.id,
+      originalImageUrl: items.originalImageUrl,
+      processedImageUrl: items.processedImageUrl,
+      label: items.label,
+      tags: items.tags,
+      status: items.status,
+      locationId: items.locationId,
+      locationName: locations.name,
+      locationIcon: locations.icon,
+      createdAt: items.createdAt,
+    })
+    .from(items)
+    .leftJoin(locations, eq(items.locationId, locations.id))
+    .where(eq(items.userId, userId))
+    .orderBy(asc(locations.name), desc(items.createdAt));
 }

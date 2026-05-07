@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home", icon: "⌂" },
   { href: "/capture", label: "Capture", icon: "\u{1F4F7}" },
   { href: "/inbox", label: "Inbox", icon: "\u{1F4E5}", showBadge: true },
+  { href: "/gallery", label: "Gallery", icon: "\u{1F5BC}" },
   { href: "/dashboard", label: "Dashboard", icon: "\u{1F4CA}" },
 ] as const;
 
