@@ -1,7 +1,10 @@
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { items, locations } from "@/server/db/schema";
-import { triggerBackgroundRemoval } from "@/server/services/cloudinary-processing";
+import {
+  triggerAutoTagging,
+  triggerBackgroundRemoval,
+} from "@/server/services/cloudinary-processing";
 
 async function touchLocation(db: Database, locationId: string) {
   await db
@@ -55,6 +58,7 @@ export async function captureItem(
   }
 
   triggerBackgroundRemoval(input.cloudinaryPublicId).catch(() => {});
+  triggerAutoTagging(input.cloudinaryPublicId).catch(() => {});
 
   return item;
 }
