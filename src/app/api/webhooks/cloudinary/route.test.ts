@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
-const { mockHandleBackgroundRemoval } = vi.hoisted(() => ({
+const {
+  mockHandleBackgroundRemoval,
+  mockHandleAutoTagging,
+  mockExtractAutoTaggingData,
+  mockIsAutoTaggingNotification,
+} = vi.hoisted(() => ({
   mockHandleBackgroundRemoval: vi.fn().mockResolvedValue({ updated: true }),
+  mockHandleAutoTagging: vi.fn().mockResolvedValue({ updated: true }),
+  mockExtractAutoTaggingData: vi.fn().mockReturnValue(null),
+  mockIsAutoTaggingNotification: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock("@/server/db", () => ({
@@ -15,6 +23,9 @@ vi.mock("@/server/services/cloudinary-webhook", () => ({
   ),
   parseWebhookPayload: vi.fn((body: unknown) => body),
   handleBackgroundRemoval: mockHandleBackgroundRemoval,
+  handleAutoTagging: mockHandleAutoTagging,
+  extractAutoTaggingData: mockExtractAutoTaggingData,
+  isAutoTaggingNotification: mockIsAutoTaggingNotification,
 }));
 
 function makeRequest(body: string, headers: Record<string, string> = {}) {
@@ -140,5 +151,95 @@ describe("POST /api/webhooks/cloudinary", () => {
     );
     expect(res.status).toBe(200);
     expect(mockHandleBackgroundRemoval).not.toHaveBeenCalled();
+  });
+
+  it("calls handleAutoTagging when info notification is auto-tagging", async () => {
+    mockHandleAutoTagging.mockClear();
+    mockIsAutoTaggingNotification.mockReturnValue(true);
+    const tagEntries = [
+      { tag: "toy", confidence: 0.95 },
+      { tag: "plastic", confidence: 0.8 },
+    ];
+    mockExtractAutoTaggingData.mockReturnValue(tagEntries);
+
+    const body = JSON.stringify({
+      notification_type: "info",
+      info_kind: "categorization",
+      public_id: "totaltidy/abc123",
+      secure_url: "https://example.com/img.jpg",
+      resource_type: "image",
+      info: {
+        categorization: {
+          imagga_tagging: {
+            status: "complete",
+            data: tagEntries,
+          },
+        },
+      },
+    });
+
+    const res = await POST(
+      makeRequest(body, {
+        "x-cld-signature": "valid-sig",
+        "x-cld-timestamp": "1234567890",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockHandleAutoTagging).toHaveBeenCalledWith(
+      expect.anything(),
+      "totaltidy/abc123",
+      tagEntries,
+    );
+
+    mockIsAutoTaggingNotification.mockReturnValue(false);
+  });
+
+  it("does not call handleAutoTagging when info notification is not auto-tagging", async () => {
+    mockHandleAutoTagging.mockClear();
+    mockIsAutoTaggingNotification.mockReturnValue(false);
+
+    const body = JSON.stringify({
+      notification_type: "info",
+      public_id: "totaltidy/xyz",
+      secure_url: "https://example.com/img.jpg",
+      resource_type: "image",
+    });
+
+    const res = await POST(
+      makeRequest(body, {
+        "x-cld-signature": "valid-sig",
+        "x-cld-timestamp": "1234567890",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockHandleAutoTagging).not.toHaveBeenCalled();
+  });
+
+  it("does not call handleAutoTagging when extractAutoTaggingData returns null", async () => {
+    mockHandleAutoTagging.mockClear();
+    mockIsAutoTaggingNotification.mockReturnValue(true);
+    mockExtractAutoTaggingData.mockReturnValue(null);
+
+    const body = JSON.stringify({
+      notification_type: "info",
+      info_kind: "categorization",
+      public_id: "totaltidy/abc123",
+      secure_url: "https://example.com/img.jpg",
+      resource_type: "image",
+    });
+
+    const res = await POST(
+      makeRequest(body, {
+        "x-cld-signature": "valid-sig",
+        "x-cld-timestamp": "1234567890",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockHandleAutoTagging).not.toHaveBeenCalled();
+
+    mockIsAutoTaggingNotification.mockReturnValue(false);
   });
 });

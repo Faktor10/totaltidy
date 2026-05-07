@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import {
+  extractAutoTaggingData,
+  handleAutoTagging,
   handleBackgroundRemoval,
+  isAutoTaggingNotification,
   parseWebhookPayload,
   verifyWebhookSignature,
 } from "@/server/services/cloudinary-webhook";
@@ -39,6 +42,12 @@ export async function POST(request: Request) {
       await handleBackgroundRemoval(db, payload.public_id, payload.secure_url);
       break;
     case "info":
+      if (isAutoTaggingNotification(payload)) {
+        const tagEntries = extractAutoTaggingData(payload);
+        if (tagEntries) {
+          await handleAutoTagging(db, payload.public_id, tagEntries);
+        }
+      }
       break;
     default:
       break;
