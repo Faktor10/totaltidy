@@ -1,0 +1,40 @@
+.shimmerCard {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f0f0ec;
+  aspect-ratio: 1;
+}
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  animation: shimmerSlide 1.5s infinite;
+}
+
+.label {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.625rem;
+  color: #aaa;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+@keyframes shimmerSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
