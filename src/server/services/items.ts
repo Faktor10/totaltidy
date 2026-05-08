@@ -155,6 +155,22 @@ export async function batchAssignLocation(db: Database, userId: string, location
   return { count: inboxItems.length };
 }
 
+export async function listItemsByLocation(db: Database, userId: string, locationId: string) {
+  return db
+    .select({
+      id: items.id,
+      originalImageUrl: items.originalImageUrl,
+      processedImageUrl: items.processedImageUrl,
+      label: items.label,
+      tags: items.tags,
+      status: items.status,
+      createdAt: items.createdAt,
+    })
+    .from(items)
+    .where(and(eq(items.userId, userId), eq(items.locationId, locationId)))
+    .orderBy(desc(items.createdAt));
+}
+
 export async function listGalleryItems(db: Database, userId: string) {
   return db
     .select({

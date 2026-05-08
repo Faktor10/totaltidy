@@ -9,6 +9,7 @@ import {
   listGalleryItems,
   listInbox,
   listItems,
+  listItemsByLocation,
 } from "@/server/services/items";
 import { protectedProcedure, router } from "@/server/trpc";
 
@@ -20,6 +21,12 @@ export const itemsRouter = router({
   gallery: protectedProcedure.query(async ({ ctx }) => {
     return listGalleryItems(db, ctx.userId);
   }),
+
+  byLocation: protectedProcedure
+    .input(z.object({ locationId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      return listItemsByLocation(db, ctx.userId, input.locationId);
+    }),
 
   inbox: protectedProcedure.query(async ({ ctx }) => {
     return listInbox(db, ctx.userId);
