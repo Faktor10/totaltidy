@@ -93,7 +93,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Implement gallery polling: tRPC query with `refetchInterval` swaps dirty image for clean one when ready
 - [x] Enable Cloudinary auto-tagging add-on (Imagga or Google)
 - [x] Handle Cloudinary webhook: `auto_tagging` notification → write `label` + `tags` JSONB to DB
-- [ ] Build clean gallery page (`/gallery`): studio-white grid of processed images, grouped by location
+- [x] Build clean gallery page (`/gallery`): studio-white grid of processed images, grouped by location
 - [ ] Show placeholder shimmer while `processedImageUrl` is null (no spinners — shimmer only)
 - [ ] Display AI-generated label beneath each item card
 - [ ] Build location detail page (`/locations/[id]`): filtered grid for one location
