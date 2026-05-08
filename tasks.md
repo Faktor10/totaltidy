@@ -95,7 +95,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Handle Cloudinary webhook: `auto_tagging` notification → write `label` + `tags` JSONB to DB
 - [x] Build clean gallery page (`/gallery`): studio-white grid of processed images, grouped by location
 - [x] Show placeholder shimmer while `processedImageUrl` is null (no spinners — shimmer only)
-- [ ] Display AI-generated label beneath each item card
+- [x] Display AI-generated label beneath each item card
 - [ ] Build location detail page (`/locations/[id]`): filtered grid for one location
 - [ ] Write Vitest unit tests for webhook handlers (background removal, auto-tagging)
 - [ ] Write Playwright E2E test: captured item eventually shows clean background in gallery
