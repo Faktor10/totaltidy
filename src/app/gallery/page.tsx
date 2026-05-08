@@ -122,15 +122,21 @@ export default function GalleryPage() {
             <div className={styles.grid} data-testid="gallery-grid">
               {group.items.map((item) =>
                 item.processedImageUrl ? (
-                  <div key={item.id} className={styles.card} data-testid="gallery-item">
-                    <Image
-                      src={item.processedImageUrl}
-                      alt={item.label ?? "Item"}
-                      className={styles.image}
-                      fill
-                      sizes="(max-width: 640px) 50vw, 140px"
-                    />
-                    {item.label && <span className={styles.itemLabel}>{item.label}</span>}
+                  <div key={item.id} className={styles.cardWrapper} data-testid="gallery-item">
+                    <div className={styles.card}>
+                      <Image
+                        src={item.processedImageUrl}
+                        alt={item.label ?? "Item"}
+                        className={styles.image}
+                        fill
+                        sizes="(max-width: 640px) 50vw, 140px"
+                      />
+                    </div>
+                    {item.label && (
+                      <span className={styles.itemLabel} data-testid="item-label">
+                        {item.label}
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <ShimmerCard key={item.id} testId="gallery-item-processing" />

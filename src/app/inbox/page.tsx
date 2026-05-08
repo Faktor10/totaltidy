@@ -73,15 +73,21 @@ export default function InboxPage() {
         <div className={styles.grid} data-testid="inbox-grid">
           {items.map((item) =>
             item.processedImageUrl ? (
-              <div key={item.id} className={styles.card} data-testid="inbox-item">
-                <Image
-                  src={item.processedImageUrl}
-                  alt={item.label ?? "Unsorted item"}
-                  className={styles.image}
-                  fill
-                  sizes="(max-width: 640px) 50vw, 140px"
-                />
-                {item.label && <span className={styles.itemLabel}>{item.label}</span>}
+              <div key={item.id} className={styles.cardWrapper} data-testid="inbox-item">
+                <div className={styles.card}>
+                  <Image
+                    src={item.processedImageUrl}
+                    alt={item.label ?? "Unsorted item"}
+                    className={styles.image}
+                    fill
+                    sizes="(max-width: 640px) 50vw, 140px"
+                  />
+                </div>
+                {item.label && (
+                  <span className={styles.itemLabel} data-testid="item-label">
+                    {item.label}
+                  </span>
+                )}
               </div>
             ) : (
               <ShimmerCard key={item.id} testId="inbox-item-processing" />
