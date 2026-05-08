@@ -3,11 +3,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BatchAssignPrompt } from "@/components/batch-assign-prompt";
+import { ShimmerCard } from "@/components/shimmer-card";
 import { trpc } from "@/lib/trpc";
 import styles from "./inbox.module.css";
 
+const POLLING_INTERVAL_MS = 3000;
+
 export default function InboxPage() {
-  const { data: items, isLoading, error, refetch } = trpc.items.inbox.useQuery();
+  const {
+    data: items,
+    isLoading,
+    error,
+    refetch,
+  } = trpc.items.inbox.useQuery(undefined, {
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return false;
+      return data.some((item) => !item.processedImageUrl) ? POLLING_INTERVAL_MS : false;
+    },
+  });
   const { data: lastLocation } = trpc.locations.lastUsed.useQuery();
   const utils = trpc.useUtils();
 
@@ -57,18 +71,22 @@ export default function InboxPage() {
 
       {items && items.length > 0 ? (
         <div className={styles.grid} data-testid="inbox-grid">
-          {items.map((item) => (
-            <div key={item.id} className={styles.card} data-testid="inbox-item">
-              <Image
-                src={item.processedImageUrl ?? item.originalImageUrl}
-                alt={item.label ?? "Unsorted item"}
-                className={styles.image}
-                fill
-                sizes="(max-width: 640px) 50vw, 140px"
-              />
-              {item.label && <span className={styles.itemLabel}>{item.label}</span>}
-            </div>
-          ))}
+          {items.map((item) =>
+            item.processedImageUrl ? (
+              <div key={item.id} className={styles.card} data-testid="inbox-item">
+                <Image
+                  src={item.processedImageUrl}
+                  alt={item.label ?? "Unsorted item"}
+                  className={styles.image}
+                  fill
+                  sizes="(max-width: 640px) 50vw, 140px"
+                />
+                {item.label && <span className={styles.itemLabel}>{item.label}</span>}
+              </div>
+            ) : (
+              <ShimmerCard key={item.id} testId="inbox-item-processing" />
+            ),
+          )}
         </div>
       ) : (
         <div className={styles.empty}>

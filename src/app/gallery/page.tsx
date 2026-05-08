@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
+import { ShimmerCard } from "@/components/shimmer-card";
 import { trpc } from "@/lib/trpc";
 import styles from "./gallery.module.css";
 
@@ -132,13 +133,7 @@ export default function GalleryPage() {
                     {item.label && <span className={styles.itemLabel}>{item.label}</span>}
                   </div>
                 ) : (
-                  <div
-                    key={item.id}
-                    className={styles.shimmerCard}
-                    data-testid="gallery-item-processing"
-                  >
-                    <div className={styles.shimmer} />
-                  </div>
+                  <ShimmerCard key={item.id} testId="gallery-item-processing" />
                 ),
               )}
             </div>
