@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import type { Database } from "@/server/db";
 import { locations } from "@/server/db/schema";
 
@@ -28,4 +28,13 @@ export async function getLastUsedLocation(db: Database, userId: string) {
     .limit(1);
 
   return bySortOrder ?? null;
+}
+
+export async function getLocation(db: Database, userId: string, locationId: string) {
+  const [location] = await db
+    .select()
+    .from(locations)
+    .where(and(eq(locations.id, locationId), eq(locations.userId, userId)));
+
+  return location ?? null;
 }

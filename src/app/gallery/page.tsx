@@ -110,15 +110,28 @@ export default function GalleryPage() {
             className={styles.locationGroup}
             data-testid="location-group"
           >
-            <div className={styles.locationHeader}>
-              {group.locationIcon && (
-                <span className={styles.locationIcon}>{group.locationIcon}</span>
-              )}
-              <h2 className={styles.locationName}>{group.locationName}</h2>
-              <span className={styles.locationCount}>
-                {group.items.length} {group.items.length === 1 ? "item" : "items"}
-              </span>
-            </div>
+            {group.locationId ? (
+              <Link
+                href={`/locations/${group.locationId}`}
+                className={styles.locationHeader}
+                data-testid="location-link"
+              >
+                {group.locationIcon && (
+                  <span className={styles.locationIcon}>{group.locationIcon}</span>
+                )}
+                <h2 className={styles.locationName}>{group.locationName}</h2>
+                <span className={styles.locationCount}>
+                  {group.items.length} {group.items.length === 1 ? "item" : "items"}
+                </span>
+              </Link>
+            ) : (
+              <div className={styles.locationHeader}>
+                <h2 className={styles.locationName}>{group.locationName}</h2>
+                <span className={styles.locationCount}>
+                  {group.items.length} {group.items.length === 1 ? "item" : "items"}
+                </span>
+              </div>
+            )}
             <div className={styles.grid} data-testid="gallery-grid">
               {group.items.map((item) =>
                 item.processedImageUrl ? (
