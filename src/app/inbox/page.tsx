@@ -90,7 +90,9 @@ export default function InboxPage() {
                 )}
               </div>
             ) : (
-              <ShimmerCard key={item.id} testId="inbox-item-processing" />
+              <div key={item.id} data-testid="inbox-item">
+                <ShimmerCard testId="inbox-item-processing" />
+              </div>
             ),
           )}
         </div>
