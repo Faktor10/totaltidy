@@ -98,7 +98,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Display AI-generated label beneath each item card
 - [x] Build location detail page (`/locations/[id]`): filtered grid for one location
 - [x] Write Vitest unit tests for webhook handlers (background removal, auto-tagging)
-- [ ] Write Playwright E2E test: captured item eventually shows clean background in gallery
+- [x] Write Playwright E2E test: captured item eventually shows clean background in gallery
 - [ ] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.3 PR**
 
 ---
