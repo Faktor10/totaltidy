@@ -97,6 +97,48 @@ describe("captureItem", () => {
     expect(db.insert).toHaveBeenCalled();
   });
 
+  it("persists lastUsedAt and useCount when locationId is provided", async () => {
+    const locationId = "loc-001";
+    const itemWithLocation = { ...mockItem, locationId };
+    const setSpy = vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    });
+    const db = {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ id: locationId }]),
+        }),
+      }),
+      insert: vi.fn().mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([itemWithLocation]),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        set: setSpy,
+      }),
+    } as never;
+
+    await captureItem(db, userId, {
+      cloudinaryPublicId: "totaltidy/photo1",
+      locationId,
+    });
+
+    expect(db.update).toHaveBeenCalledTimes(1);
+    const setArg = setSpy.mock.calls[0][0];
+    expect(setArg.lastUsedAt).toBeInstanceOf(Date);
+    expect(setArg.useCount).toBeDefined();
+  });
+
+  it("does not update location stats when no locationId is provided", async () => {
+    const db = createMockDb();
+    await captureItem(db, userId, {
+      cloudinaryPublicId: "totaltidy/photo1",
+    });
+
+    expect(db.update).not.toHaveBeenCalled();
+  });
+
   it("throws when location does not belong to user", async () => {
     const db = createMockDb({ selectResult: [] });
 
@@ -394,6 +436,48 @@ describe("assignLocation", () => {
     );
     expect(db.select).toHaveBeenCalledTimes(1);
   });
+
+  it("persists lastUsedAt and useCount after assigning location", async () => {
+    let updateCallCount = 0;
+    const setSpy = vi.fn().mockImplementation(() => {
+      updateCallCount++;
+      if (updateCallCount === 1) {
+        return {
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updatedItem]),
+          }),
+        };
+      }
+      return {
+        where: vi.fn().mockResolvedValue(undefined),
+      };
+    });
+
+    let selectCallCount = 0;
+    const selectResults = [[{ id: locationId }], [{ id: itemId }]];
+
+    const db = {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() => {
+            const result = selectResults[selectCallCount] ?? [];
+            selectCallCount++;
+            return Promise.resolve(result);
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        set: setSpy,
+      }),
+    } as never;
+
+    await assignLocation(db, userId, { itemId, locationId });
+
+    expect(db.update).toHaveBeenCalledTimes(2);
+    const locationStatsArg = setSpy.mock.calls[1][0];
+    expect(locationStatsArg.lastUsedAt).toBeInstanceOf(Date);
+    expect(locationStatsArg.useCount).toBeDefined();
+  });
 });
 
 describe("batchAssignLocation", () => {
@@ -468,5 +552,37 @@ describe("batchAssignLocation", () => {
 
     expect(result).toEqual({ count: 1 });
     expect(db.update).toHaveBeenCalledTimes(2);
+  });
+
+  it("persists lastUsedAt and useCount with batch item count", async () => {
+    const inboxItems = [{ id: "item-001" }, { id: "item-002" }, { id: "item-003" }];
+    const setSpy = vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    });
+
+    let selectCallCount = 0;
+    const selectResults = [[{ id: locationId }], inboxItems];
+
+    const db = {
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() => {
+            const result = selectResults[selectCallCount] ?? [];
+            selectCallCount++;
+            return Promise.resolve(result);
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        set: setSpy,
+      }),
+    } as never;
+
+    await batchAssignLocation(db, userId, locationId);
+
+    expect(db.update).toHaveBeenCalledTimes(2);
+    const locationStatsArg = setSpy.mock.calls[1][0];
+    expect(locationStatsArg.lastUsedAt).toBeInstanceOf(Date);
+    expect(locationStatsArg.useCount).toBeDefined();
   });
 });
