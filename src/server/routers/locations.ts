@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { getLastUsedLocation, getLocation, listLocations } from "@/server/services/locations";
+import {
+  getLastUsedLocation,
+  getLocation,
+  listLocations,
+  listLocationsPredicted,
+} from "@/server/services/locations";
 import { protectedProcedure, router } from "@/server/trpc";
 
 export const locationsRouter = router({
@@ -21,5 +26,9 @@ export const locationsRouter = router({
 
   lastUsed: protectedProcedure.query(async ({ ctx }) => {
     return getLastUsedLocation(db, ctx.userId);
+  }),
+
+  predicted: protectedProcedure.query(async ({ ctx }) => {
+    return listLocationsPredicted(db, ctx.userId);
   }),
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getLastUsedLocation, listLocations } from "./locations";
+import { getLastUsedLocation, listLocations, scoreLocation } from "./locations";
 
 describe("listLocations", () => {
   const userId = "user-abc-123";
@@ -54,6 +54,60 @@ describe("listLocations", () => {
     const result = await listLocations(db, userId);
 
     expect(result).toEqual([]);
+  });
+});
+
+describe("scoreLocation", () => {
+  const now = new Date("2025-06-15T14:00:00Z");
+
+  it("scores a frequently-used, recently-used location highest", () => {
+    const score = scoreLocation(
+      { useCount: 10, lastUsedAt: new Date("2025-06-15T13:00:00Z") },
+      now,
+      10,
+      0.5,
+    );
+    // frequency=0.4*1.0, recency=0.4*exp(-1*ln2/24)≈0.4*0.971, timeOfDay=0.2*0.5
+    expect(score).toBeGreaterThan(0.75);
+  });
+
+  it("scores an unused location at zero", () => {
+    const score = scoreLocation({ useCount: 0, lastUsedAt: null }, now, 10, 0);
+    expect(score).toBe(0);
+  });
+
+  it("recency decays over time", () => {
+    const recentScore = scoreLocation(
+      { useCount: 5, lastUsedAt: new Date("2025-06-15T13:00:00Z") },
+      now,
+      10,
+      0,
+    );
+    const staleScore = scoreLocation(
+      { useCount: 5, lastUsedAt: new Date("2025-06-10T13:00:00Z") },
+      now,
+      10,
+      0,
+    );
+    expect(recentScore).toBeGreaterThan(staleScore);
+  });
+
+  it("frequency component scales with useCount", () => {
+    const highFreq = scoreLocation({ useCount: 10, lastUsedAt: null }, now, 10, 0);
+    const lowFreq = scoreLocation({ useCount: 2, lastUsedAt: null }, now, 10, 0);
+    expect(highFreq).toBeGreaterThan(lowFreq);
+  });
+
+  it("time-of-day ratio boosts the score", () => {
+    const withTimeBoost = scoreLocation({ useCount: 5, lastUsedAt: null }, now, 10, 1.0);
+    const withoutTimeBoost = scoreLocation({ useCount: 5, lastUsedAt: null }, now, 10, 0);
+    expect(withTimeBoost).toBeGreaterThan(withoutTimeBoost);
+    expect(withTimeBoost - withoutTimeBoost).toBeCloseTo(0.2);
+  });
+
+  it("handles maxUseCount of zero gracefully", () => {
+    const score = scoreLocation({ useCount: 0, lastUsedAt: null }, now, 0, 0);
+    expect(score).toBe(0);
   });
 });
 

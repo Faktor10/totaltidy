@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 export default function CapturePage() {
   const { upload } = useCloudinaryUpload();
   const captureItem = trpc.items.capture.useMutation();
-  const { data: locations } = trpc.locations.list.useQuery();
+  const { data: locations } = trpc.locations.predicted.useQuery();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
 
   const handleCapture = useCallback(
