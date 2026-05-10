@@ -106,7 +106,7 @@ This file is the source of truth for build progress. Keep it up to date.
 ### Milestone 1.4 — Polish & Reward Loop (Weeks 7–8)
 
 - [x] Implement location prediction algorithm in `locationsService`: reorder bubbles by frequency + recency + time-of-day
-- [ ] Persist `lastUsedAt` and `useCount` on every location assignment
+- [x] Persist `lastUsedAt` and `useCount` on every location assignment
 - [ ] Implement Last-Location Memory: default `locationId` on new captures to most recently used location
 - [ ] Create `trpc.sessions.startSession` + `trpc.sessions.endSession` procedures
 - [ ] Implement 60-second inactivity detector on camera page; auto-call `endSession` on timeout
