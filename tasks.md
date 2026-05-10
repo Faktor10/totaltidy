@@ -99,7 +99,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Build location detail page (`/locations/[id]`): filtered grid for one location
 - [x] Write Vitest unit tests for webhook handlers (background removal, auto-tagging)
 - [x] Write Playwright E2E test: captured item eventually shows clean background in gallery
-- [ ] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.3 PR**
+- [x] **Quality gate: `npm run lint && npm test && npm run e2e` all green — open Milestone 1.3 PR**
 
 ---
 
