@@ -108,7 +108,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Implement location prediction algorithm in `locationsService`: reorder bubbles by frequency + recency + time-of-day
 - [x] Persist `lastUsedAt` and `useCount` on every location assignment
 - [x] Implement Last-Location Memory: default `locationId` on new captures to most recently used location
-- [ ] Create `trpc.sessions.startSession` + `trpc.sessions.endSession` procedures
+- [x] Create `trpc.sessions.startSession` + `trpc.sessions.endSession` procedures
 - [ ] Implement 60-second inactivity detector on camera page; auto-call `endSession` on timeout
 - [ ] Build Joy-Roll summary card: items captured, locations used, "floor space reclaimed" metaphor
 - [ ] Define Scandi-minimalist design tokens: sage greens, soft terracottas, paper whites, warm wood tones

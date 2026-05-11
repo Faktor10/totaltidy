@@ -1,6 +1,7 @@
 import { createCallerFactory, protectedProcedure, publicProcedure, router } from "@/server/trpc";
 import { itemsRouter } from "./items";
 import { locationsRouter } from "./locations";
+import { sessionsRouter } from "./sessions";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -13,6 +14,7 @@ export const appRouter = router({
 
   items: itemsRouter,
   locations: locationsRouter,
+  sessions: sessionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
