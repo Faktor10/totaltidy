@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraView } from "@/components/camera-view";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { trpc } from "@/lib/trpc";
@@ -9,7 +9,15 @@ export default function CapturePage() {
   const { upload } = useCloudinaryUpload();
   const captureItem = trpc.items.capture.useMutation();
   const { data: locations } = trpc.locations.predicted.useQuery();
+  const { data: lastUsedLocation } = trpc.locations.lastUsed.useQuery();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const hasUserSelected = useRef(false);
+
+  useEffect(() => {
+    if (!hasUserSelected.current && lastUsedLocation?.id) {
+      setSelectedLocationId(lastUsedLocation.id);
+    }
+  }, [lastUsedLocation]);
 
   const handleCapture = useCallback(
     async (blob: Blob) => {
@@ -24,6 +32,7 @@ export default function CapturePage() {
   );
 
   const handleLocationSelect = useCallback((locationId: string) => {
+    hasUserSelected.current = true;
     setSelectedLocationId((prev) => (prev === locationId ? null : locationId));
   }, []);
 

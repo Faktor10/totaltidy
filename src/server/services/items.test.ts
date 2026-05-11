@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assignLocation,
   batchAssignLocation,
@@ -8,6 +8,11 @@ import {
   listInbox,
   listItems,
 } from "./items";
+
+const mockGetLastUsedLocation = vi.fn();
+vi.mock("@/server/services/locations", () => ({
+  getLastUsedLocation: (...args: unknown[]) => mockGetLastUsedLocation(...args),
+}));
 
 vi.stubEnv("CLOUDINARY_CLOUD_NAME", "test-cloud");
 
@@ -29,6 +34,10 @@ describe("buildCloudinaryUrl", () => {
 });
 
 describe("captureItem", () => {
+  beforeEach(() => {
+    mockGetLastUsedLocation.mockClear();
+  });
+
   const userId = "user-abc-123";
   const mockItem = {
     id: "item-001",
@@ -69,7 +78,8 @@ describe("captureItem", () => {
     } as never;
   }
 
-  it("creates an item with status inbox and no location", async () => {
+  it("creates an item with status inbox and no location when no last-used location exists", async () => {
+    mockGetLastUsedLocation.mockResolvedValueOnce(null);
     const db = createMockDb();
     const result = await captureItem(db, userId, {
       cloudinaryPublicId: "totaltidy/photo1",
@@ -77,6 +87,7 @@ describe("captureItem", () => {
 
     expect(result).toEqual(mockItem);
     expect(db.insert).toHaveBeenCalled();
+    expect(mockGetLastUsedLocation).toHaveBeenCalledWith(db, userId);
   });
 
   it("creates an item with a valid location", async () => {
@@ -113,7 +124,8 @@ describe("captureItem", () => {
     expect(db.update).toHaveBeenCalledTimes(1);
   });
 
-  it("does not update location stats when no locationId provided", async () => {
+  it("does not update location stats when no locationId provided and no last-used location", async () => {
+    mockGetLastUsedLocation.mockResolvedValueOnce(null);
     const db = createMockDb();
     await captureItem(db, userId, {
       cloudinaryPublicId: "totaltidy/photo1",
@@ -135,13 +147,53 @@ describe("captureItem", () => {
     expect(db.insert).not.toHaveBeenCalled();
   });
 
-  it("does not query locations when locationId is not provided", async () => {
+  it("does not query locations table directly when locationId is not provided", async () => {
+    mockGetLastUsedLocation.mockResolvedValueOnce(null);
     const db = createMockDb();
     await captureItem(db, userId, {
       cloudinaryPublicId: "totaltidy/photo1",
     });
 
     expect(db.select).not.toHaveBeenCalled();
+  });
+
+  it("defaults to last-used location when no locationId provided", async () => {
+    const lastLocationId = "loc-last-used";
+    mockGetLastUsedLocation.mockResolvedValueOnce({
+      id: lastLocationId,
+      userId,
+      name: "Kitchen",
+      icon: null,
+      sortOrder: 0,
+      lastUsedAt: new Date(),
+      useCount: 5,
+    });
+    const itemWithLastLocation = { ...mockItem, locationId: lastLocationId };
+    const db = createMockDb({ insertResult: [itemWithLastLocation] });
+
+    const result = await captureItem(db, userId, {
+      cloudinaryPublicId: "totaltidy/photo1",
+    });
+
+    expect(result).toEqual(itemWithLastLocation);
+    expect(mockGetLastUsedLocation).toHaveBeenCalledWith(db, userId);
+    expect(db.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses explicit locationId over last-used location", async () => {
+    const locationId = "loc-001";
+    const itemWithLocation = { ...mockItem, locationId };
+    const db = createMockDb({
+      selectResult: [{ id: locationId }],
+      insertResult: [itemWithLocation],
+    });
+
+    await captureItem(db, userId, {
+      cloudinaryPublicId: "totaltidy/photo1",
+      locationId,
+    });
+
+    expect(mockGetLastUsedLocation).not.toHaveBeenCalled();
   });
 });
 

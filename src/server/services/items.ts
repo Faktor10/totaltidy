@@ -5,6 +5,7 @@ import {
   triggerAutoTagging,
   triggerBackgroundRemoval,
 } from "@/server/services/cloudinary-processing";
+import { getLastUsedLocation } from "@/server/services/locations";
 
 async function touchLocation(db: Database, locationId: string) {
   await db
@@ -29,14 +30,21 @@ export async function captureItem(
     locationId?: string;
   },
 ) {
-  if (input.locationId) {
+  let resolvedLocationId = input.locationId;
+
+  if (resolvedLocationId) {
     const [location] = await db
       .select({ id: locations.id })
       .from(locations)
-      .where(and(eq(locations.id, input.locationId), eq(locations.userId, userId)));
+      .where(and(eq(locations.id, resolvedLocationId), eq(locations.userId, userId)));
 
     if (!location) {
       throw new Error("Location not found");
+    }
+  } else {
+    const lastUsed = await getLastUsedLocation(db, userId);
+    if (lastUsed) {
+      resolvedLocationId = lastUsed.id;
     }
   }
 
@@ -48,13 +56,13 @@ export async function captureItem(
       userId,
       cloudinaryPublicId: input.cloudinaryPublicId,
       originalImageUrl,
-      locationId: input.locationId ?? null,
+      locationId: resolvedLocationId ?? null,
       status: "inbox",
     })
     .returning();
 
-  if (input.locationId) {
-    await touchLocation(db, input.locationId);
+  if (resolvedLocationId) {
+    await touchLocation(db, resolvedLocationId);
   }
 
   triggerBackgroundRemoval(input.cloudinaryPublicId).catch(() => {});
