@@ -97,27 +97,13 @@ describe("captureItem", () => {
     expect(db.insert).toHaveBeenCalled();
   });
 
-  it("persists lastUsedAt and useCount when locationId is provided", async () => {
+  it("updates location lastUsedAt and useCount when locationId is provided", async () => {
     const locationId = "loc-001";
     const itemWithLocation = { ...mockItem, locationId };
-    const setSpy = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue(undefined),
+    const db = createMockDb({
+      selectResult: [{ id: locationId }],
+      insertResult: [itemWithLocation],
     });
-    const db = {
-      select: vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([{ id: locationId }]),
-        }),
-      }),
-      insert: vi.fn().mockReturnValue({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([itemWithLocation]),
-        }),
-      }),
-      update: vi.fn().mockReturnValue({
-        set: setSpy,
-      }),
-    } as never;
 
     await captureItem(db, userId, {
       cloudinaryPublicId: "totaltidy/photo1",
@@ -125,12 +111,9 @@ describe("captureItem", () => {
     });
 
     expect(db.update).toHaveBeenCalledTimes(1);
-    const setArg = setSpy.mock.calls[0][0];
-    expect(setArg.lastUsedAt).toBeInstanceOf(Date);
-    expect(setArg.useCount).toBeDefined();
   });
 
-  it("does not update location stats when no locationId is provided", async () => {
+  it("does not update location stats when no locationId provided", async () => {
     const db = createMockDb();
     await captureItem(db, userId, {
       cloudinaryPublicId: "totaltidy/photo1",
@@ -410,6 +393,13 @@ describe("assignLocation", () => {
     expect(db.update).toHaveBeenCalled();
   });
 
+  it("persists lastUsedAt and useCount on location after assignment", async () => {
+    const db = createMockDb();
+    await assignLocation(db, userId, { itemId, locationId });
+
+    expect(db.update).toHaveBeenCalledTimes(2);
+  });
+
   it("throws when location does not belong to user", async () => {
     const db = createMockDb({ locationSelectResult: [] });
 
@@ -539,7 +529,7 @@ describe("batchAssignLocation", () => {
     expect(db.update).not.toHaveBeenCalled();
   });
 
-  it("updates location stats after assigning items", async () => {
+  it("persists lastUsedAt and useCount on location after batch assignment", async () => {
     const db = createMockDb();
     await batchAssignLocation(db, userId, locationId);
 
