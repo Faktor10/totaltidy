@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraView } from "@/components/camera-view";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
+import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
 import { trpc } from "@/lib/trpc";
+
+const INACTIVITY_TIMEOUT_MS = 60_000;
 
 export default function CapturePage() {
   const { upload } = useCloudinaryUpload();
@@ -13,14 +16,53 @@ export default function CapturePage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const hasUserSelected = useRef(false);
 
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionStarted = useRef(false);
+
+  const startSession = trpc.sessions.startSession.useMutation();
+  const endSessionMutation = trpc.sessions.endSession.useMutation();
+
+  const handleInactivityTimeout = useCallback(() => {
+    if (sessionIdRef.current) {
+      endSessionMutation.mutate({ sessionId: sessionIdRef.current });
+      sessionIdRef.current = null;
+    }
+  }, [endSessionMutation]);
+
+  const { recordActivity, isTimedOut } = useInactivityDetector({
+    timeoutMs: INACTIVITY_TIMEOUT_MS,
+    onTimeout: handleInactivityTimeout,
+    enabled: sessionIdRef.current !== null,
+  });
+
+  useEffect(() => {
+    if (sessionStarted.current) return;
+    sessionStarted.current = true;
+    startSession.mutate(undefined, {
+      onSuccess: (session) => {
+        sessionIdRef.current = session.id;
+      },
+    });
+  }, [startSession]);
+
   useEffect(() => {
     if (!hasUserSelected.current && lastUsedLocation?.id) {
       setSelectedLocationId(lastUsedLocation.id);
     }
   }, [lastUsedLocation]);
 
+  useEffect(() => {
+    const currentSessionId = sessionIdRef.current;
+    return () => {
+      if (currentSessionId) {
+        endSessionMutation.mutate({ sessionId: currentSessionId });
+      }
+    };
+  }, [endSessionMutation]);
+
   const handleCapture = useCallback(
     async (blob: Blob) => {
+      recordActivity();
       const result = await upload(blob);
       if (!result) return;
       captureItem.mutate({
@@ -28,13 +70,17 @@ export default function CapturePage() {
         locationId: selectedLocationId ?? undefined,
       });
     },
-    [upload, captureItem, selectedLocationId],
+    [upload, captureItem, selectedLocationId, recordActivity],
   );
 
-  const handleLocationSelect = useCallback((locationId: string) => {
-    hasUserSelected.current = true;
-    setSelectedLocationId((prev) => (prev === locationId ? null : locationId));
-  }, []);
+  const handleLocationSelect = useCallback(
+    (locationId: string) => {
+      recordActivity();
+      hasUserSelected.current = true;
+      setSelectedLocationId((prev) => (prev === locationId ? null : locationId));
+    },
+    [recordActivity],
+  );
 
   return (
     <CameraView
@@ -42,6 +88,7 @@ export default function CapturePage() {
       locations={locations}
       selectedLocationId={selectedLocationId}
       onLocationSelect={handleLocationSelect}
+      isSessionEnded={isTimedOut}
     />
   );
 }
