@@ -17,6 +17,8 @@ export interface CameraViewProps {
   locations?: LocationBubble[];
   selectedLocationId?: string | null;
   onLocationSelect?: (locationId: string) => void;
+  isSessionEnded?: boolean;
+  onResume?: () => void;
 }
 
 export function CameraView({
@@ -25,6 +27,8 @@ export function CameraView({
   locations,
   selectedLocationId,
   onLocationSelect,
+  isSessionEnded,
+  onResume,
 }: CameraViewProps) {
   const { videoRef, isStreaming, error, startCamera, stopCamera, captureFrame } =
     useCamera(CAMERA_OPTIONS);
@@ -131,6 +135,22 @@ export function CameraView({
       </div>
 
       {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
+
+      {isSessionEnded && (
+        <div className={styles.sessionEndedOverlay} data-testid="session-ended-overlay">
+          <p className={styles.sessionEndedText}>Session ended due to inactivity</p>
+          {onResume && (
+            <button
+              type="button"
+              className={styles.resumeButton}
+              onClick={onResume}
+              data-testid="resume-button"
+            >
+              Start new session
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
