@@ -110,7 +110,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Implement Last-Location Memory: default `locationId` on new captures to most recently used location
 - [x] Create `trpc.sessions.startSession` + `trpc.sessions.endSession` procedures
 - [x] Implement 60-second inactivity detector on camera page; auto-call `endSession` on timeout
-- [ ] Build Joy-Roll summary card: items captured, locations used, "floor space reclaimed" metaphor
+- [x] Build Joy-Roll summary card: items captured, locations used, "floor space reclaimed" metaphor
 - [ ] Define Scandi-minimalist design tokens: sage greens, soft terracottas, paper whites, warm wood tones
 - [ ] Apply typography tokens (font family, scale, weight) globally via CSS variables
 - [ ] Add rounded corners and bouncy micro-animations (CSS transitions / Framer Motion) to key interactions
