@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraView } from "@/components/camera-view";
+import type { SessionSummary } from "@/components/joy-roll-card";
+import { JoyRollCard } from "@/components/joy-roll-card";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
 import { trpc } from "@/lib/trpc";
@@ -14,6 +16,7 @@ export default function CapturePage() {
   const { data: locations } = trpc.locations.predicted.useQuery();
   const { data: lastUsedLocation } = trpc.locations.lastUsed.useQuery();
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
   const hasUserSelected = useRef(false);
 
   const sessionIdRef = useRef<string | null>(null);
@@ -24,7 +27,22 @@ export default function CapturePage() {
 
   const handleInactivityTimeout = useCallback(() => {
     if (sessionIdRef.current) {
-      endSessionMutation.mutate({ sessionId: sessionIdRef.current });
+      endSessionMutation.mutate(
+        { sessionId: sessionIdRef.current },
+        {
+          onSuccess: (session) => {
+            const summary = session.summary as {
+              itemsCaptured: number;
+              locationsUsed: number;
+              unsortedItems: number;
+              durationMs: number;
+            } | null;
+            if (summary) {
+              setSessionSummary(summary);
+            }
+          },
+        },
+      );
       sessionIdRef.current = null;
     }
   }, [endSessionMutation]);
@@ -68,6 +86,7 @@ export default function CapturePage() {
       captureItem.mutate({
         cloudinaryPublicId: result.public_id,
         locationId: selectedLocationId ?? undefined,
+        captureSessionId: sessionIdRef.current ?? undefined,
       });
     },
     [upload, captureItem, selectedLocationId, recordActivity],
@@ -83,12 +102,15 @@ export default function CapturePage() {
   );
 
   return (
-    <CameraView
-      onCapture={handleCapture}
-      locations={locations}
-      selectedLocationId={selectedLocationId}
-      onLocationSelect={handleLocationSelect}
-      isSessionEnded={isTimedOut}
-    />
+    <>
+      <CameraView
+        onCapture={handleCapture}
+        locations={locations}
+        selectedLocationId={selectedLocationId}
+        onLocationSelect={handleLocationSelect}
+        isSessionEnded={isTimedOut}
+      />
+      {isTimedOut && sessionSummary && <JoyRollCard summary={sessionSummary} />}
+    </>
   );
 }
