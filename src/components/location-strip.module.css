@@ -19,18 +19,18 @@
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   border: 2px solid rgba(255, 255, 255, 0.5);
   background: rgba(0, 0, 0, 0.4);
-  color: #fff;
+  color: var(--surface-white);
   font-size: 0.8125rem;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
   transition:
-    transform 0.12s ease,
-    background 0.12s ease,
-    border-color 0.12s ease;
+    transform var(--ease-quick),
+    background var(--ease-quick),
+    border-color var(--ease-quick);
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
 }
@@ -41,7 +41,7 @@
 
 .selected {
   background: rgba(255, 255, 255, 0.25);
-  border-color: #fff;
+  border-color: var(--surface-white);
 }
 
 .icon {

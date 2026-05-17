@@ -4,15 +4,15 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
-  border-radius: 12px;
-  background: #fef9ec;
-  border: 1px solid #f0d98c;
+  border-radius: var(--radius-md);
+  background: var(--wood-50);
+  border: 1px solid var(--wood-200);
 }
 
 .text {
   flex: 1;
   font-size: 0.875rem;
-  color: #4a3d1f;
+  color: var(--wood-700);
   line-height: 1.4;
 }
 
@@ -28,18 +28,18 @@
 
 .confirmButton {
   padding: 0.375rem 0.875rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   border: none;
-  background: #2d5a3d;
-  color: #fff;
+  background: var(--sage-600);
+  color: var(--surface-white);
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--ease-default);
 }
 
 .confirmButton:hover {
-  background: #1e4a2e;
+  background: var(--sage-700);
 }
 
 .confirmButton:disabled {
@@ -49,13 +49,13 @@
 
 .dismissButton {
   padding: 0.375rem 0.625rem;
-  border-radius: 9999px;
-  border: 1px solid #d4c99a;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--wood-300);
   background: transparent;
-  color: #8a7a4a;
+  color: var(--wood-500);
   font-size: 0.8125rem;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--ease-default);
 }
 
 .dismissButton:hover {

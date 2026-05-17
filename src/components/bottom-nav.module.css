@@ -7,8 +7,8 @@
   align-items: stretch;
   justify-content: space-around;
   height: 3.5rem;
-  background: #fff;
-  border-top: 1px solid #e8e8e4;
+  background: var(--surface-white);
+  border-top: 1px solid var(--neutral-200);
   padding-bottom: env(safe-area-inset-bottom, 0);
   z-index: 100;
 }
@@ -21,17 +21,17 @@
   flex: 1;
   gap: 0.125rem;
   text-decoration: none;
-  color: #999;
+  color: var(--text-placeholder);
   font-size: 0.625rem;
-  transition: color 0.15s ease;
+  transition: color var(--ease-default);
 }
 
 .link:hover {
-  color: #555;
+  color: var(--text-tertiary);
 }
 
 .active {
-  color: #2d5a3d;
+  color: var(--sage-600);
 }
 
 .iconWrap {

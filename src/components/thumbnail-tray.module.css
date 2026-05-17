@@ -10,7 +10,7 @@
 .thumb {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.6);
   opacity: 0.85;
@@ -20,7 +20,7 @@
 .latest {
   animation: slideIn 0.2s ease-out;
   opacity: 1;
-  border-color: #fff;
+  border-color: var(--surface-white);
 }
 
 @keyframes slideIn {
