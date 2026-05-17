@@ -39,7 +39,7 @@
 .camera-view__retry-btn {
   padding: 10px 24px;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: #fff;
   font-size: 14px;

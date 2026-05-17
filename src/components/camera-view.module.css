@@ -41,7 +41,7 @@
 .thumbnail {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 2px solid rgba(255, 255, 255, 0.7);
   object-fit: cover;
   animation: thumbnailIn 0.2s ease-out;
@@ -125,7 +125,7 @@
 
 .retryButton {
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: none;
   background: #fff;
   color: #000;
@@ -136,7 +136,7 @@
 
 .closeButtonInline {
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: transparent;
   color: #fff;
@@ -174,7 +174,7 @@
 
 .resumeButton {
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: none;
   background: #fff;
   color: #000;
