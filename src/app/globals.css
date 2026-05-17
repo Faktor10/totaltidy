@@ -1,3 +1,82 @@
+:root {
+  /* Sage Greens — Primary */
+  --sage-50: #f2f5f3;
+  --sage-100: #dce6de;
+  --sage-200: #b8ccba;
+  --sage-300: #8baa8e;
+  --sage-400: #6b8e6f;
+  --sage-500: #5b7a5e;
+  --sage-600: #4a6b4d;
+  --sage-700: #2d5a3d;
+  --sage-800: #1e4a2e;
+  --sage-900: #2d3a2e;
+
+  /* Soft Terracottas — Accent */
+  --terra-50: #fef7f2;
+  --terra-100: #fdeee2;
+  --terra-200: #f5d0b0;
+  --terra-300: #d9a67a;
+  --terra-400: #c17a50;
+  --terra-500: #a66840;
+
+  /* Paper Whites — Backgrounds */
+  --paper-white: #fdfcfa;
+  --paper: #fafaf8;
+  --paper-warm: #f0f0ec;
+
+  /* Warm Woods — Text / Neutrals */
+  --wood-900: #1a1a1a;
+  --wood-800: #333333;
+  --wood-700: #4a3d1f;
+  --wood-600: #555555;
+  --wood-500: #666666;
+  --wood-400: #7a8a7b;
+  --wood-300: #888888;
+  --wood-200: #999999;
+  --wood-100: #aaaaaa;
+
+  /* Semantic: Surfaces */
+  --surface: #ffffff;
+  --surface-raised: var(--paper-white);
+  --surface-page: var(--paper);
+  --surface-shimmer: var(--paper-warm);
+
+  /* Semantic: Primary Actions */
+  --primary: var(--sage-700);
+  --primary-hover: var(--sage-800);
+  --primary-light: var(--sage-500);
+
+  /* Semantic: Accent */
+  --accent: var(--terra-400);
+  --accent-bg: var(--terra-50);
+
+  /* Semantic: Text */
+  --text-heading: var(--wood-900);
+  --text-body: var(--wood-800);
+  --text-secondary: var(--wood-600);
+  --text-muted: var(--wood-500);
+  --text-subtle: var(--wood-300);
+  --text-disabled: var(--wood-200);
+  --text-hint: var(--wood-100);
+
+  /* Semantic: Borders */
+  --border: #e8e8e4;
+  --border-warm: #f0d98c;
+  --border-muted: #d4c99a;
+
+  /* Semantic: Feedback */
+  --error: #bb4444;
+  --error-badge: #cc4444;
+  --warning-bg: #fef9ec;
+  --warning-text: var(--wood-700);
+  --warning-border: var(--border-warm);
+  --warning-dismiss: #8a7a4a;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: rgba(0, 0, 0, 0.8);
+}
+
 *,
 *::before,
 *::after {
