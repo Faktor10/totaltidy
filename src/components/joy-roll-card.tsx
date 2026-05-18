@@ -1,68 +1,76 @@
 "use client";
 
+import {
+  computeFloorSpaceReclaimed,
+  formatDuration,
+  getEncouragementMessage,
+  type SessionSummary,
+} from "@/lib/joy-roll";
 import styles from "./joy-roll-card.module.css";
 
-export interface SessionSummary {
-  itemsCaptured: number;
-  locationsUsed: number;
-  unsortedItems: number;
-  durationMs: number;
-}
-
-interface JoyRollCardProps {
+export interface JoyRollCardProps {
   summary: SessionSummary;
+  onNewSession?: () => void;
+  onViewGallery?: () => void;
 }
 
-function formatDuration(ms: number): string {
-  const seconds = Math.round(ms / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return remaining > 0 ? `${minutes}m ${remaining}s` : `${minutes}m`;
-}
-
-function calculateFloorSpace(itemCount: number): string {
-  const sqFt = itemCount * 2.5;
-  if (sqFt < 1) return "a tiny corner";
-  if (sqFt < 10) return `${sqFt.toFixed(0)} sq ft`;
-  return `${sqFt.toFixed(0)} sq ft`;
-}
-
-export function JoyRollCard({ summary }: JoyRollCardProps) {
+export function JoyRollCard({ summary, onNewSession, onViewGallery }: JoyRollCardProps) {
   const { itemsCaptured, locationsUsed, durationMs } = summary;
-  const floorSpace = calculateFloorSpace(itemsCaptured);
 
   return (
-    <div className={styles.overlay} data-testid="joy-roll-card">
-      <div className={styles.card}>
-        <h2 className={styles.title}>Session Complete</h2>
+    <div className={styles.overlay} data-testid="joy-roll-overlay">
+      <div className={styles.card} data-testid="joy-roll-card">
+        <p className={styles.encouragement}>{getEncouragementMessage(itemsCaptured)}</p>
 
         <div className={styles.stats}>
-          <div className={styles.stat} data-testid="joy-roll-items">
-            <span className={styles.statValue}>{itemsCaptured}</span>
+          <div className={styles.stat}>
+            <span className={styles.statValue} data-testid="joy-roll-items">
+              {itemsCaptured}
+            </span>
             <span className={styles.statLabel}>
-              {itemsCaptured === 1 ? "item captured" : "items captured"}
+              {itemsCaptured === 1 ? "item" : "items"} captured
             </span>
           </div>
-
-          <div className={styles.stat} data-testid="joy-roll-locations">
-            <span className={styles.statValue}>{locationsUsed}</span>
-            <span className={styles.statLabel}>
-              {locationsUsed === 1 ? "location used" : "locations used"}
+          <div className={styles.stat}>
+            <span className={styles.statValue} data-testid="joy-roll-locations">
+              {locationsUsed}
             </span>
-          </div>
-
-          <div className={styles.stat} data-testid="joy-roll-duration">
-            <span className={styles.statValue}>{formatDuration(durationMs)}</span>
-            <span className={styles.statLabel}>session time</span>
+            <span className={styles.statLabel}>
+              {locationsUsed === 1 ? "location" : "locations"} used
+            </span>
           </div>
         </div>
 
-        {itemsCaptured > 0 && (
-          <p className={styles.floorSpace} data-testid="joy-roll-floor-space">
-            You just reclaimed ~{floorSpace} of floor space
-          </p>
-        )}
+        <p className={styles.floorSpace} data-testid="joy-roll-floor-space">
+          You reclaimed {computeFloorSpaceReclaimed(itemsCaptured)}
+        </p>
+
+        <p className={styles.duration} data-testid="joy-roll-duration">
+          Session time: {formatDuration(durationMs)}
+        </p>
+
+        <div className={styles.actions}>
+          {onNewSession && (
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={onNewSession}
+              data-testid="joy-roll-new-session"
+            >
+              Start new session
+            </button>
+          )}
+          {onViewGallery && (
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={onViewGallery}
+              data-testid="joy-roll-view-gallery"
+            >
+              View gallery
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

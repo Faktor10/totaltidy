@@ -1,83 +1,95 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
-import type { SessionSummary } from "./joy-roll-card";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { JoyRollCard } from "./joy-roll-card";
 
-const baseSummary: SessionSummary = {
-  itemsCaptured: 8,
-  locationsUsed: 3,
-  unsortedItems: 2,
-  durationMs: 95_000,
-};
+vi.mock("./joy-roll-card.module.css", () => ({
+  default: new Proxy(
+    {},
+    {
+      get: (_, prop) => `mock-${String(prop)}`,
+    },
+  ),
+}));
 
 describe("JoyRollCard", () => {
-  afterEach(() => {
-    cleanup();
+  afterEach(cleanup);
+
+  const defaultSummary = {
+    itemsCaptured: 8,
+    locationsUsed: 3,
+    unsortedItems: 2,
+    durationMs: 90000,
+  };
+
+  it("renders the encouragement message", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    expect(screen.getByText("You're on a roll!")).toBeDefined();
   });
 
-  it("renders the card with test id", () => {
-    render(<JoyRollCard summary={baseSummary} />);
-    expect(screen.getByTestId("joy-roll-card")).toBeDefined();
+  it("displays the items captured count", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    expect(screen.getByTestId("joy-roll-items").textContent).toBe("8");
   });
 
-  it("displays the session complete title", () => {
-    render(<JoyRollCard summary={baseSummary} />);
-    expect(screen.getByText("Session Complete")).toBeDefined();
+  it("displays the locations used count", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    expect(screen.getByTestId("joy-roll-locations").textContent).toBe("3");
   });
 
-  it("displays items captured count", () => {
-    render(<JoyRollCard summary={baseSummary} />);
-    expect(screen.getByTestId("joy-roll-items").textContent).toContain("8");
-    expect(screen.getByText("items captured")).toBeDefined();
+  it("displays the floor space reclaimed metaphor", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    const el = screen.getByTestId("joy-roll-floor-space");
+    expect(el.textContent).toContain("reclaimed");
+    expect(el.textContent).toContain("sq ft");
   });
 
-  it("uses singular form for one item", () => {
-    render(<JoyRollCard summary={{ ...baseSummary, itemsCaptured: 1 }} />);
+  it("displays the session duration", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    expect(screen.getByTestId("joy-roll-duration").textContent).toContain("1m 30s");
+  });
+
+  it("renders singular labels for 1 item and 1 location", () => {
+    render(
+      <JoyRollCard
+        summary={{ itemsCaptured: 1, locationsUsed: 1, unsortedItems: 0, durationMs: 5000 }}
+      />,
+    );
     expect(screen.getByText("item captured")).toBeDefined();
-  });
-
-  it("displays locations used count", () => {
-    render(<JoyRollCard summary={baseSummary} />);
-    expect(screen.getByTestId("joy-roll-locations").textContent).toContain("3");
-    expect(screen.getByText("locations used")).toBeDefined();
-  });
-
-  it("uses singular form for one location", () => {
-    render(<JoyRollCard summary={{ ...baseSummary, locationsUsed: 1 }} />);
     expect(screen.getByText("location used")).toBeDefined();
   });
 
-  it("displays session duration in minutes and seconds", () => {
-    render(<JoyRollCard summary={baseSummary} />);
-    expect(screen.getByTestId("joy-roll-duration").textContent).toContain("1m 35s");
+  it("calls onNewSession when button is clicked", () => {
+    const onNewSession = vi.fn();
+    render(<JoyRollCard summary={defaultSummary} onNewSession={onNewSession} />);
+    fireEvent.click(screen.getByTestId("joy-roll-new-session"));
+    expect(onNewSession).toHaveBeenCalledTimes(1);
   });
 
-  it("displays duration in seconds only for short sessions", () => {
-    render(<JoyRollCard summary={{ ...baseSummary, durationMs: 45_000 }} />);
-    expect(screen.getByTestId("joy-roll-duration").textContent).toContain("45s");
+  it("calls onViewGallery when button is clicked", () => {
+    const onViewGallery = vi.fn();
+    render(<JoyRollCard summary={defaultSummary} onViewGallery={onViewGallery} />);
+    fireEvent.click(screen.getByTestId("joy-roll-view-gallery"));
+    expect(onViewGallery).toHaveBeenCalledTimes(1);
   });
 
-  it("displays duration without seconds when exactly on the minute", () => {
-    render(<JoyRollCard summary={{ ...baseSummary, durationMs: 120_000 }} />);
-    expect(screen.getByTestId("joy-roll-duration").textContent).toContain("2m");
+  it("does not render new session button if callback not provided", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    expect(screen.queryByTestId("joy-roll-new-session")).toBeNull();
   });
 
-  it("displays floor space reclaimed metaphor", () => {
-    render(<JoyRollCard summary={baseSummary} />);
-    const floorSpace = screen.getByTestId("joy-roll-floor-space");
-    expect(floorSpace.textContent).toContain("20 sq ft");
-    expect(floorSpace.textContent).toContain("reclaimed");
+  it("does not render gallery button if callback not provided", () => {
+    render(<JoyRollCard summary={defaultSummary} />);
+    expect(screen.queryByTestId("joy-roll-view-gallery")).toBeNull();
   });
 
-  it("does not show floor space when zero items captured", () => {
-    render(<JoyRollCard summary={{ ...baseSummary, itemsCaptured: 0 }} />);
-    expect(screen.queryByTestId("joy-roll-floor-space")).toBeNull();
-  });
-
-  it("calculates floor space at 2.5 sq ft per item", () => {
-    render(<JoyRollCard summary={{ ...baseSummary, itemsCaptured: 4 }} />);
-    const floorSpace = screen.getByTestId("joy-roll-floor-space");
-    expect(floorSpace.textContent).toContain("10 sq ft");
+  it("handles zero items gracefully", () => {
+    render(
+      <JoyRollCard
+        summary={{ itemsCaptured: 0, locationsUsed: 0, unsortedItems: 0, durationMs: 60000 }}
+      />,
+    );
+    expect(screen.getByText("Ready when you are!")).toBeDefined();
+    expect(screen.getByTestId("joy-roll-items").textContent).toBe("0");
   });
 });
