@@ -1,3 +1,63 @@
+:root {
+  /* ── Sage Greens ── */
+  --sage-900: #1e4a2e;
+  --sage-800: #2d5a3d;
+  --sage-700: #2d3a2e;
+  --sage-600: #5b7a5e;
+  --sage-500: #7a8a7b;
+  --sage-400: #9aaa9c;
+  --sage-200: #dce5dd;
+  --sage-100: #edf2ee;
+  --sage-50: #f5f8f5;
+
+  /* ── Soft Terracottas ── */
+  --terra-700: #8b5230;
+  --terra-600: #c17a50;
+  --terra-400: #d49570;
+  --terra-200: #f0d0b8;
+  --terra-100: #faeee5;
+  --terra-50: #fef7f2;
+
+  /* ── Paper Whites ── */
+  --paper-white: #fdfcfa;
+  --paper: #fafaf8;
+  --paper-warm: #f5f4f0;
+  --parchment: #f0f0ec;
+
+  /* ── Warm Wood Tones ── */
+  --wood-900: #1c1b19;
+  --wood-700: #37352f;
+  --wood-500: #58554e;
+  --wood-400: #6a675f;
+  --wood-300: #8a877f;
+  --wood-200: #9c9990;
+  --wood-100: #aeaba2;
+
+  /* ── Amber (warm notifications) ── */
+  --amber-600: #4a3d1f;
+  --amber-400: #8a7a4a;
+  --amber-300: #d4c99a;
+  --amber-200: #f0d98c;
+  --amber-50: #fef9ec;
+
+  /* ── Berry (errors / alerts) ── */
+  --berry-600: #cc4444;
+  --berry-500: #bb4444;
+
+  /* ── Borders ── */
+  --border-default: #e8e8e4;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* ── Radii ── */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
 *,
 *::before,
 *::after {

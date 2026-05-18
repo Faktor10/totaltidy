@@ -1,8 +1,8 @@
 .shimmerCard {
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #f0f0ec;
+  background: var(--parchment);
   aspect-ratio: 1;
 }
 
@@ -25,7 +25,7 @@
   right: 0;
   text-align: center;
   font-size: 0.625rem;
-  color: #aaa;
+  color: var(--wood-100);
   font-weight: 500;
   letter-spacing: 0.02em;
 }

@@ -11,8 +11,8 @@
 }
 
 .card {
-  background: #fdfcfa;
-  border-radius: 20px;
+  background: var(--paper-white);
+  border-radius: var(--radius-xl);
   padding: 2rem 1.5rem;
   max-width: 320px;
   width: 100%;
@@ -23,7 +23,7 @@
 .title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #2d3a2e;
+  color: var(--sage-700);
   margin: 0 0 1.5rem;
 }
 
@@ -44,23 +44,23 @@
 .statValue {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #5b7a5e;
+  color: var(--sage-600);
 }
 
 .statLabel {
   font-size: 0.75rem;
-  color: #7a8a7b;
+  color: var(--sage-500);
   font-weight: 500;
 }
 
 .floorSpace {
   font-size: 0.875rem;
-  color: #c17a50;
+  color: var(--terra-600);
   font-weight: 600;
   margin: 0;
   padding: 0.75rem 1rem;
-  background: #fef7f2;
-  border-radius: 10px;
+  background: var(--terra-50);
+  border-radius: var(--radius-md);
 }
 
 @keyframes fadeIn {
