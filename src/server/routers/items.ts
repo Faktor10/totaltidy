@@ -41,6 +41,7 @@ export const itemsRouter = router({
       z.object({
         cloudinaryPublicId: z.string().min(1),
         locationId: z.string().uuid().optional(),
+        captureSessionId: z.string().uuid().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

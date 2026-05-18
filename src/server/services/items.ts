@@ -28,6 +28,7 @@ export async function captureItem(
   input: {
     cloudinaryPublicId: string;
     locationId?: string;
+    captureSessionId?: string;
   },
 ) {
   let resolvedLocationId = input.locationId;
@@ -57,6 +58,7 @@ export async function captureItem(
       cloudinaryPublicId: input.cloudinaryPublicId,
       originalImageUrl,
       locationId: resolvedLocationId ?? null,
+      captureSessionId: input.captureSessionId ?? null,
       status: "inbox",
     })
     .returning();

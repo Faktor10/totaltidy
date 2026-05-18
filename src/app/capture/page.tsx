@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraView } from "@/components/camera-view";
+import type { SessionSummary } from "@/components/joy-roll-card";
 import { JoyRollCard } from "@/components/joy-roll-card";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
@@ -33,8 +34,14 @@ export default function CapturePage() {
         { sessionId: sessionIdRef.current },
         {
           onSuccess: (session) => {
-            if (session?.summary) {
-              setSessionSummary(session.summary as SessionSummary);
+            const summary = session.summary as {
+              itemsCaptured: number;
+              locationsUsed: number;
+              unsortedItems: number;
+              durationMs: number;
+            } | null;
+            if (summary) {
+              setSessionSummary(summary);
             }
           },
         },
@@ -86,6 +93,7 @@ export default function CapturePage() {
       captureItem.mutate({
         cloudinaryPublicId: result.public_id,
         locationId: selectedLocationId ?? undefined,
+        captureSessionId: sessionIdRef.current ?? undefined,
       });
     },
     [upload, captureItem, selectedLocationId, recordActivity],
