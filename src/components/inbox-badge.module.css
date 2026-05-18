@@ -5,9 +5,9 @@
   min-width: 1.25rem;
   height: 1.25rem;
   padding: 0 0.375rem;
-  border-radius: 9999px;
-  background: #c44;
-  color: #fff;
+  border-radius: var(--radius-full);
+  background: var(--color-badge);
+  color: var(--color-surface);
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1;
