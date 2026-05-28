@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
   computeFloorSpaceReclaimed,
   formatDuration,
@@ -14,15 +15,52 @@ export interface JoyRollCardProps {
   onViewGallery?: () => void;
 }
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  visible: { opacity: 1, y: 0, scale: 1 },
+};
+
+const childVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0 },
+};
+
 export function JoyRollCard({ summary, onNewSession, onViewGallery }: JoyRollCardProps) {
   const { itemsCaptured, locationsUsed, durationMs } = summary;
 
   return (
-    <div className={styles.overlay} data-testid="joy-roll-overlay">
-      <div className={styles.card} data-testid="joy-roll-card">
-        <p className={styles.encouragement}>{getEncouragementMessage(itemsCaptured)}</p>
+    <motion.div
+      className={styles.overlay}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      data-testid="joy-roll-overlay"
+    >
+      <motion.div
+        className={styles.card}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{ type: "spring", stiffness: 300, damping: 22, mass: 0.8 }}
+        data-testid="joy-roll-card"
+      >
+        <motion.p
+          className={styles.encouragement}
+          variants={childVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.15 }}
+        >
+          {getEncouragementMessage(itemsCaptured)}
+        </motion.p>
 
-        <div className={styles.stats}>
+        <motion.div
+          className={styles.stats}
+          variants={childVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.25 }}
+        >
           <div className={styles.stat}>
             <span className={styles.statValue} data-testid="joy-roll-items">
               {itemsCaptured}
@@ -39,17 +77,37 @@ export function JoyRollCard({ summary, onNewSession, onViewGallery }: JoyRollCar
               {locationsUsed === 1 ? "location" : "locations"} used
             </span>
           </div>
-        </div>
+        </motion.div>
 
-        <p className={styles.floorSpace} data-testid="joy-roll-floor-space">
+        <motion.p
+          className={styles.floorSpace}
+          variants={childVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.35 }}
+          data-testid="joy-roll-floor-space"
+        >
           You reclaimed {computeFloorSpaceReclaimed(itemsCaptured)}
-        </p>
+        </motion.p>
 
-        <p className={styles.duration} data-testid="joy-roll-duration">
+        <motion.p
+          className={styles.duration}
+          variants={childVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.4 }}
+          data-testid="joy-roll-duration"
+        >
           Session time: {formatDuration(durationMs)}
-        </p>
+        </motion.p>
 
-        <div className={styles.actions}>
+        <motion.div
+          className={styles.actions}
+          variants={childVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.5 }}
+        >
           {onNewSession && (
             <button
               type="button"
@@ -70,8 +128,8 @@ export function JoyRollCard({ summary, onNewSession, onViewGallery }: JoyRollCar
               View gallery
             </button>
           )}
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

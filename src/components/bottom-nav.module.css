@@ -23,11 +23,20 @@
   text-decoration: none;
   color: var(--color-wood-300);
   font-size: var(--text-2xs);
-  transition: color 0.15s ease;
+  transition:
+    color var(--duration-fast) ease,
+    transform var(--duration-normal) var(--ease-bounce);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .link:hover {
   color: var(--color-wood-600);
+}
+
+.link:active {
+  transform: scale(0.9);
+  transition-duration: 0.08s;
+  transition-timing-function: ease-out;
 }
 
 .active {

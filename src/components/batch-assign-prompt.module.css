@@ -7,6 +7,18 @@
   border-radius: var(--radius-md);
   background: var(--color-warn-bg);
   border: 1px solid var(--color-warn-border);
+  animation: bannerSlideIn var(--duration-slow) var(--ease-bounce-soft);
+}
+
+@keyframes bannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .text {
@@ -35,11 +47,17 @@
   font-size: var(--text-caption);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background var(--duration-fast) ease,
+    transform var(--duration-normal) var(--ease-bounce);
 }
 
 .confirmButton:hover {
   background: var(--color-sage-800);
+}
+
+.confirmButton:active {
+  transform: scale(0.93);
 }
 
 .confirmButton:disabled {
@@ -55,9 +73,15 @@
   color: var(--color-warn-muted);
   font-size: var(--text-caption);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background var(--duration-fast) ease,
+    transform var(--duration-normal) var(--ease-bounce);
 }
 
 .dismissButton:hover {
   background: rgba(0, 0, 0, 0.03);
+}
+
+.dismissButton:active {
+  transform: scale(0.93);
 }
