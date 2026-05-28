@@ -45,8 +45,8 @@
 }
 
 .encouragement {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
   color: var(--color-wood-950);
   margin: 0 0 1.5rem;
 }
@@ -65,21 +65,21 @@
 }
 
 .statValue {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
   color: var(--color-sage-500);
 }
 
 .statLabel {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: var(--color-sage-400);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .floorSpace {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--color-terracotta-500);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   margin: 0;
   padding: 0.75rem 1rem;
   background: var(--color-terracotta-50);
@@ -87,8 +87,8 @@
 }
 
 .duration {
-  font-size: 0.8rem;
-  color: #999;
+  font-size: var(--text-caption);
+  color: var(--color-wood-300);
   margin: 0;
 }
 
@@ -102,12 +102,12 @@
 
 .primaryButton {
   padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: none;
-  background: #2d6a4f;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
+  background: var(--color-sage-700);
+  color: var(--color-surface);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: transform 0.1s ease;
 }
@@ -118,10 +118,10 @@
 
 .secondaryButton {
   padding: 0.5rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: none;
   background: transparent;
-  color: #666;
-  font-size: 0.875rem;
+  color: var(--color-wood-500);
+  font-size: var(--text-base);
   cursor: pointer;
 }

@@ -22,7 +22,7 @@
   gap: 0.125rem;
   text-decoration: none;
   color: var(--color-wood-300);
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   transition: color 0.15s ease;
 }
 
@@ -40,10 +40,10 @@
 }
 
 .icon {
-  font-size: 1.25rem;
-  line-height: 1;
+  font-size: var(--text-xl);
+  line-height: var(--leading-none);
 }
 
 .label {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }

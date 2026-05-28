@@ -11,13 +11,13 @@
 
 .text {
   flex: 1;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: var(--color-warn-text);
-  line-height: 1.4;
+  line-height: var(--leading-normal);
 }
 
 .locationName {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .actions {
@@ -32,8 +32,8 @@
   border: none;
   background: var(--color-sage-700);
   color: var(--color-surface);
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -53,7 +53,7 @@
   border: 1px solid var(--color-warn-border-light);
   background: transparent;
   color: var(--color-warn-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-caption);
   cursor: pointer;
   transition: background 0.15s ease;
 }

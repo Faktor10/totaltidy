@@ -23,8 +23,8 @@
   border: 2px solid rgba(255, 255, 255, 0.5);
   background: rgba(0, 0, 0, 0.4);
   color: #fff;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -45,10 +45,10 @@
 }
 
 .icon {
-  font-size: 1rem;
-  line-height: 1;
+  font-size: var(--text-md);
+  line-height: var(--leading-none);
 }
 
 .label {
-  line-height: 1;
+  line-height: var(--leading-none);
 }

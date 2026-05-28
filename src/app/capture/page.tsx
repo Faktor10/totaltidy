@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraView } from "@/components/camera-view";
-import type { SessionSummary } from "@/components/joy-roll-card";
 import { JoyRollCard } from "@/components/joy-roll-card";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
