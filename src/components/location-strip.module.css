@@ -28,15 +28,10 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    transform 0.12s ease,
     background 0.12s ease,
     border-color 0.12s ease;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
-}
-
-.bubble:active {
-  transform: scale(0.93);
 }
 
 .selected {

@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { BatchAssignPrompt } from "@/components/batch-assign-prompt";
 import { ShimmerCard } from "@/components/shimmer-card";
+import { springBouncy } from "@/lib/motion";
 import { trpc } from "@/lib/trpc";
 import styles from "./inbox.module.css";
 
@@ -73,7 +75,14 @@ export default function InboxPage() {
         <div className={styles.grid} data-testid="inbox-grid">
           {items.map((item) =>
             item.processedImageUrl ? (
-              <div key={item.id} className={styles.cardWrapper} data-testid="inbox-item">
+              <motion.div
+                key={item.id}
+                className={styles.cardWrapper}
+                data-testid="inbox-item"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                transition={springBouncy}
+              >
                 <div className={styles.card}>
                   <Image
                     src={item.processedImageUrl}
@@ -88,7 +97,7 @@ export default function InboxPage() {
                     {item.label}
                   </span>
                 )}
-              </div>
+              </motion.div>
             ) : (
               <div key={item.id} data-testid="inbox-item">
                 <ShimmerCard testId="inbox-item-processing" />

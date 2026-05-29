@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+import { springBouncy, tapScale } from "@/lib/motion";
 import styles from "./location-strip.module.css";
 
 export interface LocationBubble {
@@ -48,17 +50,20 @@ export function LocationStrip({ locations, selectedId, onSelect }: LocationStrip
       {visible.map((loc) => {
         const isSelected = loc.id === selectedId;
         return (
-          <button
+          <motion.button
             key={loc.id}
             type="button"
             className={`${styles.bubble}${isSelected ? ` ${styles.selected}` : ""}`}
             onClick={() => onSelect?.(loc.id)}
             aria-pressed={isSelected}
             data-testid="location-bubble"
+            whileTap={tapScale}
+            transition={springBouncy}
+            layout
           >
             <span className={styles.icon}>{resolveIcon(loc.name, loc.icon)}</span>
             <span className={styles.label}>{loc.name}</span>
-          </button>
+          </motion.button>
         );
       })}
     </div>

@@ -1,11 +1,13 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
   computeFloorSpaceReclaimed,
   formatDuration,
   getEncouragementMessage,
   type SessionSummary,
 } from "@/lib/joy-roll";
+import { fadeIn, slideUp, springBouncy, springGentle, tapScaleSubtle } from "@/lib/motion";
 import styles from "./joy-roll-card.module.css";
 
 export interface JoyRollCardProps {
@@ -18,27 +20,51 @@ export function JoyRollCard({ summary, onNewSession, onViewGallery }: JoyRollCar
   const { itemsCaptured, locationsUsed, durationMs } = summary;
 
   return (
-    <div className={styles.overlay} data-testid="joy-roll-overlay">
-      <div className={styles.card} data-testid="joy-roll-card">
+    <motion.div
+      className={styles.overlay}
+      data-testid="joy-roll-overlay"
+      variants={fadeIn}
+      initial="hidden"
+      animate="visible"
+      transition={{ duration: 0.25 }}
+    >
+      <motion.div
+        className={styles.card}
+        data-testid="joy-roll-card"
+        variants={slideUp}
+        initial="hidden"
+        animate="visible"
+        transition={springGentle}
+      >
         <p className={styles.encouragement}>{getEncouragementMessage(itemsCaptured)}</p>
 
         <div className={styles.stats}>
-          <div className={styles.stat}>
+          <motion.div
+            className={styles.stat}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ ...springBouncy, delay: 0.15 }}
+          >
             <span className={styles.statValue} data-testid="joy-roll-items">
               {itemsCaptured}
             </span>
             <span className={styles.statLabel}>
               {itemsCaptured === 1 ? "item" : "items"} captured
             </span>
-          </div>
-          <div className={styles.stat}>
+          </motion.div>
+          <motion.div
+            className={styles.stat}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ ...springBouncy, delay: 0.25 }}
+          >
             <span className={styles.statValue} data-testid="joy-roll-locations">
               {locationsUsed}
             </span>
             <span className={styles.statLabel}>
               {locationsUsed === 1 ? "location" : "locations"} used
             </span>
-          </div>
+          </motion.div>
         </div>
 
         <p className={styles.floorSpace} data-testid="joy-roll-floor-space">
@@ -51,27 +77,31 @@ export function JoyRollCard({ summary, onNewSession, onViewGallery }: JoyRollCar
 
         <div className={styles.actions}>
           {onNewSession && (
-            <button
+            <motion.button
               type="button"
               className={styles.primaryButton}
               onClick={onNewSession}
               data-testid="joy-roll-new-session"
+              whileTap={tapScaleSubtle}
+              transition={springBouncy}
             >
               Start new session
-            </button>
+            </motion.button>
           )}
           {onViewGallery && (
-            <button
+            <motion.button
               type="button"
               className={styles.secondaryButton}
               onClick={onViewGallery}
               data-testid="joy-roll-view-gallery"
+              whileTap={tapScaleSubtle}
+              transition={springBouncy}
             >
               View gallery
-            </button>
+            </motion.button>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

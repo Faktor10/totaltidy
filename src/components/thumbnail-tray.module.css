@@ -7,6 +7,10 @@
   padding: 0 1rem 12px;
 }
 
+.thumbWrap {
+  flex-shrink: 0;
+}
+
 .thumb {
   width: 48px;
   height: 48px;
@@ -14,22 +18,10 @@
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.6);
   opacity: 0.85;
-  flex-shrink: 0;
+  display: block;
 }
 
-.latest {
-  animation: slideIn 0.2s ease-out;
+.latest .thumb {
   opacity: 1;
   border-color: #fff;
-}
-
-@keyframes slideIn {
-  from {
-    transform: scale(0.7);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
 }

@@ -32,48 +32,17 @@
   padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
 }
 
-.thumbnailTray {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.thumbnail {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-sm);
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  object-fit: cover;
-  animation: thumbnailIn 0.2s ease-out;
-}
-
-@keyframes thumbnailIn {
-  from {
-    opacity: 0;
-    transform: scale(0.7);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 .shutterButton {
   width: 72px;
   height: 72px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   border: 4px solid #fff;
   background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.1s ease;
   -webkit-tap-highlight-color: transparent;
-}
-
-.shutterButton:active {
-  transform: scale(0.92);
 }
 
 .shutterButton:disabled {
@@ -85,7 +54,7 @@
   display: block;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: #fff;
 }
 
@@ -96,7 +65,7 @@
   left: 1rem;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   border: none;
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
@@ -125,7 +94,7 @@
 
 .retryButton {
   padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: none;
   background: #fff;
   color: #000;
@@ -136,7 +105,7 @@
 
 .closeButtonInline {
   padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: transparent;
   color: #fff;
@@ -174,7 +143,7 @@
 
 .resumeButton {
   padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: none;
   background: #fff;
   color: #000;

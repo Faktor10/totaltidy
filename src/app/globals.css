@@ -41,9 +41,11 @@
   --color-shadow-card: rgba(0, 0, 0, 0.08);
 
   /* Radius */
+  --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 
   /* Typography — Font family */

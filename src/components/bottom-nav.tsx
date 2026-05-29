@@ -1,7 +1,9 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { springBouncy } from "@/lib/motion";
 import styles from "./bottom-nav.module.css";
 import { InboxBadge } from "./inbox-badge";
 
@@ -27,10 +29,14 @@ export function BottomNav() {
             className={`${styles.link} ${isActive ? styles.active : ""}`}
             aria-current={isActive ? "page" : undefined}
           >
-            <span className={styles.iconWrap}>
+            <motion.span
+              className={styles.iconWrap}
+              whileTap={{ scale: 0.8 }}
+              transition={springBouncy}
+            >
               <span className={styles.icon}>{item.icon}</span>
               {"showBadge" in item && item.showBadge && <InboxBadge />}
-            </span>
+            </motion.span>
             <span className={styles.label}>{item.label}</span>
           </Link>
         );

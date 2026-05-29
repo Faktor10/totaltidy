@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { ShimmerCard } from "@/components/shimmer-card";
+import { springBouncy } from "@/lib/motion";
 import { trpc } from "@/lib/trpc";
 import styles from "./gallery.module.css";
 
@@ -135,7 +137,14 @@ export default function GalleryPage() {
             <div className={styles.grid} data-testid="gallery-grid">
               {group.items.map((item) =>
                 item.processedImageUrl ? (
-                  <div key={item.id} className={styles.cardWrapper} data-testid="gallery-item">
+                  <motion.div
+                    key={item.id}
+                    className={styles.cardWrapper}
+                    data-testid="gallery-item"
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={springBouncy}
+                  >
                     <div className={styles.card}>
                       <Image
                         src={item.processedImageUrl}
@@ -150,7 +159,7 @@ export default function GalleryPage() {
                         {item.label}
                       </span>
                     )}
-                  </div>
+                  </motion.div>
                 ) : (
                   <ShimmerCard key={item.id} testId="gallery-item-processing" />
                 ),

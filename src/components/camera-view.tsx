@@ -1,8 +1,10 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/use-camera";
 import { triggerHaptic } from "@/lib/haptics";
+import { springBouncy, springSnappy, tapScale, tapScaleSubtle } from "@/lib/motion";
 import styles from "./camera-view.module.css";
 import type { LocationBubble } from "./location-strip";
 import { LocationStrip } from "./location-strip";
@@ -75,13 +77,25 @@ export function CameraView({
       <div className={styles.container} data-testid="camera-view">
         <div className={styles.errorOverlay}>
           <p className={styles.errorText}>{error}</p>
-          <button type="button" className={styles.retryButton} onClick={startCamera}>
+          <motion.button
+            type="button"
+            className={styles.retryButton}
+            onClick={startCamera}
+            whileTap={tapScaleSubtle}
+            transition={springBouncy}
+          >
             Try again
-          </button>
+          </motion.button>
           {onClose && (
-            <button type="button" className={styles.closeButtonInline} onClick={onClose}>
+            <motion.button
+              type="button"
+              className={styles.closeButtonInline}
+              onClick={onClose}
+              whileTap={tapScaleSubtle}
+              transition={springBouncy}
+            >
               Go back
-            </button>
+            </motion.button>
           )}
         </div>
       </div>
@@ -100,15 +114,17 @@ export function CameraView({
       />
 
       {onClose && (
-        <button
+        <motion.button
           type="button"
           className={styles.closeButton}
           onClick={onClose}
           aria-label="Close camera"
           data-testid="close-button"
+          whileTap={tapScale}
+          transition={springSnappy}
         >
           &times;
-        </button>
+        </motion.button>
       )}
 
       <div className={styles.controls}>
@@ -122,34 +138,44 @@ export function CameraView({
           />
         )}
 
-        <button
+        <motion.button
           type="button"
           className={styles.shutterButton}
           onClick={handleShutter}
           disabled={!isStreaming}
           aria-label="Capture photo"
           data-testid="shutter-button"
+          whileTap={{ scale: 0.88 }}
+          transition={springBouncy}
         >
           <span className={styles.shutterInner} />
-        </button>
+        </motion.button>
       </div>
 
       {!isStreaming && !error && <div className={styles.loading} data-testid="camera-loading" />}
 
       {isSessionEnded && (
-        <div className={styles.sessionEndedOverlay} data-testid="session-ended-overlay">
+        <motion.div
+          className={styles.sessionEndedOverlay}
+          data-testid="session-ended-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25 }}
+        >
           <p className={styles.sessionEndedText}>Session ended due to inactivity</p>
           {onResume && (
-            <button
+            <motion.button
               type="button"
               className={styles.resumeButton}
               onClick={onResume}
               data-testid="resume-button"
+              whileTap={tapScaleSubtle}
+              transition={springBouncy}
             >
               Start new session
-            </button>
+            </motion.button>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   );

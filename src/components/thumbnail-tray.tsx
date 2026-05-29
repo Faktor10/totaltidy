@@ -1,6 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
+import { popIn, springBouncy } from "@/lib/motion";
 import styles from "./thumbnail-tray.module.css";
 
 export interface ThumbnailTrayProps {
@@ -17,16 +19,24 @@ export function ThumbnailTray({ captures }: ThumbnailTrayProps) {
   return (
     <div className={styles.tray} data-testid="thumbnail-tray">
       {visible.map((blobUrl, index) => (
-        <Image
+        <motion.div
           key={blobUrl}
-          src={blobUrl}
-          alt={`Capture ${captures.length - index}`}
-          width={48}
-          height={48}
-          unoptimized
-          className={`${styles.thumb}${index === 0 ? ` ${styles.latest}` : ""}`}
-          data-testid="thumbnail-image"
-        />
+          variants={popIn}
+          initial="hidden"
+          animate="visible"
+          transition={springBouncy}
+          className={`${styles.thumbWrap}${index === 0 ? ` ${styles.latest}` : ""}`}
+        >
+          <Image
+            src={blobUrl}
+            alt={`Capture ${captures.length - index}`}
+            width={48}
+            height={48}
+            unoptimized
+            className={styles.thumb}
+            data-testid="thumbnail-image"
+          />
+        </motion.div>
       ))}
     </div>
   );
