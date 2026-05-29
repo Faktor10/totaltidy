@@ -64,11 +64,18 @@
   background: var(--color-surface);
   box-shadow: 0 1px 3px var(--color-shadow-card);
   aspect-ratio: 1;
-  transition: transform 0.12s ease;
+  transition:
+    transform var(--duration-normal) var(--ease-bounce),
+    box-shadow var(--duration-normal) ease;
 }
 
 .cardWrapper:hover .card {
-  transform: scale(1.02);
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px var(--color-shadow-card);
+}
+
+.cardWrapper:active .card {
+  transform: scale(0.97);
 }
 
 .image {
@@ -126,11 +133,17 @@
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition:
+    background var(--duration-fast) ease,
+    transform var(--duration-normal) var(--ease-bounce);
 }
 
 .captureLink:hover {
   background: var(--color-sage-800);
+}
+
+.captureLink:active {
+  transform: scale(0.95);
 }
 
 /* Loading and error states */

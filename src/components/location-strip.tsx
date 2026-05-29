@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import styles from "./location-strip.module.css";
 
 export interface LocationBubble {
@@ -38,29 +39,52 @@ function resolveIcon(name: string, icon?: string | null): string {
   return "\u{1F4CD}";
 }
 
+const stripVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
+const bubbleVariants = {
+  hidden: { opacity: 0, scale: 0.7, y: 8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 400, damping: 20 },
+  },
+};
+
 export function LocationStrip({ locations, selectedId, onSelect }: LocationStripProps) {
   const visible = locations.slice(0, MAX_BUBBLES);
 
   if (visible.length === 0) return null;
 
   return (
-    <div className={styles.strip} data-testid="location-strip">
+    <motion.div
+      className={styles.strip}
+      data-testid="location-strip"
+      variants={stripVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {visible.map((loc) => {
         const isSelected = loc.id === selectedId;
         return (
-          <button
+          <motion.button
             key={loc.id}
             type="button"
             className={`${styles.bubble}${isSelected ? ` ${styles.selected}` : ""}`}
             onClick={() => onSelect?.(loc.id)}
             aria-pressed={isSelected}
             data-testid="location-bubble"
+            variants={bubbleVariants}
+            whileTap={{ scale: 0.9 }}
           >
             <span className={styles.icon}>{resolveIcon(loc.name, loc.icon)}</span>
             <span className={styles.label}>{loc.name}</span>
-          </button>
+          </motion.button>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

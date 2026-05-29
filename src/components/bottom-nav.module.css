@@ -23,7 +23,7 @@
   text-decoration: none;
   color: var(--color-wood-300);
   font-size: var(--text-2xs);
-  transition: color 0.15s ease;
+  transition: color var(--duration-fast) ease;
 }
 
 .link:hover {
@@ -42,6 +42,11 @@
 .icon {
   font-size: var(--text-xl);
   line-height: var(--leading-none);
+  transition: transform var(--duration-normal) var(--ease-bounce);
+}
+
+.link:active .icon {
+  transform: scale(0.85);
 }
 
 .label {

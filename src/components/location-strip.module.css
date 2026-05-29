@@ -19,7 +19,7 @@
   align-items: center;
   gap: 4px;
   padding: 6px 14px;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   border: 2px solid rgba(255, 255, 255, 0.5);
   background: rgba(0, 0, 0, 0.4);
   color: #fff;
@@ -28,20 +28,30 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    transform 0.12s ease,
-    background 0.12s ease,
-    border-color 0.12s ease;
+    transform var(--duration-normal) var(--ease-bounce),
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
 }
 
 .bubble:active {
-  transform: scale(0.93);
+  transform: scale(0.9);
 }
 
 .selected {
   background: rgba(255, 255, 255, 0.25);
   border-color: #fff;
+  animation: bubblePop var(--duration-normal) var(--ease-bounce);
+}
+
+@keyframes bubblePop {
+  from {
+    transform: scale(0.92);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .icon {

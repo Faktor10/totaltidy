@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
 import styles from "./thumbnail-tray.module.css";
 
@@ -17,16 +18,22 @@ export function ThumbnailTray({ captures }: ThumbnailTrayProps) {
   return (
     <div className={styles.tray} data-testid="thumbnail-tray">
       {visible.map((blobUrl, index) => (
-        <Image
+        <motion.div
           key={blobUrl}
-          src={blobUrl}
-          alt={`Capture ${captures.length - index}`}
-          width={48}
-          height={48}
-          unoptimized
-          className={`${styles.thumb}${index === 0 ? ` ${styles.latest}` : ""}`}
-          data-testid="thumbnail-image"
-        />
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: index === 0 ? 1 : 0.85 }}
+          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+        >
+          <Image
+            src={blobUrl}
+            alt={`Capture ${captures.length - index}`}
+            width={48}
+            height={48}
+            unoptimized
+            className={`${styles.thumb}${index === 0 ? ` ${styles.latest}` : ""}`}
+            data-testid="thumbnail-image"
+          />
+        </motion.div>
       ))}
     </div>
   );
