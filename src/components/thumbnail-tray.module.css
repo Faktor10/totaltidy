@@ -18,17 +18,20 @@
 }
 
 .latest {
-  animation: slideIn 0.2s ease-out;
+  animation: popIn var(--duration-slow) var(--ease-bounce);
   opacity: 1;
   border-color: #fff;
 }
 
-@keyframes slideIn {
-  from {
-    transform: scale(0.7);
+@keyframes popIn {
+  0% {
+    transform: scale(0);
     opacity: 0;
   }
-  to {
+  60% {
+    opacity: 1;
+  }
+  100% {
     transform: scale(1);
     opacity: 1;
   }
