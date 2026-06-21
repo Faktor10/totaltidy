@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { playCategorizeSound } from "@/lib/sounds";
 import { trpc } from "@/lib/trpc";
 import styles from "./batch-assign-prompt.module.css";
 
@@ -19,7 +20,10 @@ export function BatchAssignPrompt({
 }: BatchAssignPromptProps) {
   const [dismissed, setDismissed] = useState(false);
   const batchAssign = trpc.items.batchAssignLocation.useMutation({
-    onSuccess: () => onAssigned(),
+    onSuccess: () => {
+      playCategorizeSound();
+      onAssigned();
+    },
   });
 
   if (dismissed || inboxCount === 0) return null;
