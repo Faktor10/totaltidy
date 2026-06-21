@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CameraView } from "@/components/camera-view";
 import { JoyRollCard } from "@/components/joy-roll-card";
+import { useCategorizeSound } from "@/hooks/use-categorize-sound";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
 import type { SessionSummary } from "@/lib/joy-roll";
@@ -14,6 +15,7 @@ const INACTIVITY_TIMEOUT_MS = 60_000;
 export default function CapturePage() {
   const router = useRouter();
   const { upload } = useCloudinaryUpload();
+  const { play: playCategorizeSound } = useCategorizeSound();
   const captureItem = trpc.items.capture.useMutation();
   const { data: locations } = trpc.locations.predicted.useQuery();
   const { data: lastUsedLocation } = trpc.locations.lastUsed.useQuery();
@@ -89,13 +91,22 @@ export default function CapturePage() {
       recordActivity();
       const result = await upload(blob);
       if (!result) return;
-      captureItem.mutate({
-        cloudinaryPublicId: result.public_id,
-        locationId: selectedLocationId ?? undefined,
-        captureSessionId: sessionIdRef.current ?? undefined,
-      });
+      captureItem.mutate(
+        {
+          cloudinaryPublicId: result.public_id,
+          locationId: selectedLocationId ?? undefined,
+          captureSessionId: sessionIdRef.current ?? undefined,
+        },
+        {
+          onSuccess: () => {
+            if (selectedLocationId) {
+              playCategorizeSound();
+            }
+          },
+        },
+      );
     },
-    [upload, captureItem, selectedLocationId, recordActivity],
+    [upload, captureItem, selectedLocationId, recordActivity, playCategorizeSound],
   );
 
   const handleLocationSelect = useCallback(

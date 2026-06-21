@@ -114,7 +114,7 @@ This file is the source of truth for build progress. Keep it up to date.
 - [x] Define Scandi-minimalist design tokens: sage greens, soft terracottas, paper whites, warm wood tones
 - [x] Apply typography tokens (font family, scale, weight) globally via CSS variables
 - [x] Add rounded corners and bouncy micro-animations (CSS transitions / Framer Motion) to key interactions
-- [ ] Add subtle sound effect on successful item categorization (short Web Audio API tone)
+- [x] Add subtle sound effect on successful item categorization (short Web Audio API tone)
 - [ ] Polish inbox badge with nudge copy ("3 items need a home")
 - [ ] Write Vitest unit tests for location prediction algorithm
 - [ ] Write Playwright E2E test: capture 5 items → wait 60s → Joy-Roll summary card appears
