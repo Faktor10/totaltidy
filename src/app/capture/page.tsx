@@ -7,6 +7,7 @@ import { JoyRollCard } from "@/components/joy-roll-card";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
 import type { SessionSummary } from "@/lib/joy-roll";
+import { playCategorizeSound } from "@/lib/sounds";
 import { trpc } from "@/lib/trpc";
 
 const INACTIVITY_TIMEOUT_MS = 60_000;
@@ -89,11 +90,21 @@ export default function CapturePage() {
       recordActivity();
       const result = await upload(blob);
       if (!result) return;
-      captureItem.mutate({
-        cloudinaryPublicId: result.public_id,
-        locationId: selectedLocationId ?? undefined,
-        captureSessionId: sessionIdRef.current ?? undefined,
-      });
+      const locationId = selectedLocationId ?? undefined;
+      captureItem.mutate(
+        {
+          cloudinaryPublicId: result.public_id,
+          locationId,
+          captureSessionId: sessionIdRef.current ?? undefined,
+        },
+        {
+          onSuccess: () => {
+            if (locationId) {
+              playCategorizeSound();
+            }
+          },
+        },
+      );
     },
     [upload, captureItem, selectedLocationId, recordActivity],
   );
