@@ -6,6 +6,7 @@ import { CameraView } from "@/components/camera-view";
 import { JoyRollCard } from "@/components/joy-roll-card";
 import { useCloudinaryUpload } from "@/hooks/use-cloudinary-upload";
 import { useInactivityDetector } from "@/hooks/use-inactivity-detector";
+import { playCategorizeSound } from "@/lib/categorize-sound";
 import type { SessionSummary } from "@/lib/joy-roll";
 import { trpc } from "@/lib/trpc";
 
@@ -89,11 +90,20 @@ export default function CapturePage() {
       recordActivity();
       const result = await upload(blob);
       if (!result) return;
-      captureItem.mutate({
-        cloudinaryPublicId: result.public_id,
-        locationId: selectedLocationId ?? undefined,
-        captureSessionId: sessionIdRef.current ?? undefined,
-      });
+      captureItem.mutate(
+        {
+          cloudinaryPublicId: result.public_id,
+          locationId: selectedLocationId ?? undefined,
+          captureSessionId: sessionIdRef.current ?? undefined,
+        },
+        {
+          onSuccess: () => {
+            if (selectedLocationId) {
+              playCategorizeSound();
+            }
+          },
+        },
+      );
     },
     [upload, captureItem, selectedLocationId, recordActivity],
   );
