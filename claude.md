@@ -1,17 +1,6 @@
-# TotalTidy — claude.md
+# TotalTidy — Claude Instructions
 
-## Project Overview
-
-TotalTidy is a capture-first home inventory app for busy parents. Users rapid-fire snap photos of items, the app async-removes backgrounds via Cloudinary, AI-labels items, and builds a clean digital catalog organized by physical locations in the home.
-
-## Tech Stack
-
-- **Framework:** Next.js (App Router) with TypeScript (strict mode)
-- **API:** tRPC v11 — all server communication is type-safe RPC, no REST endpoints
-- **ORM:** Drizzle ORM with PostgreSQL (Neon serverless)
-- **Image Pipeline:** Cloudinary (upload, background removal, auto-tagging, CDN)
-- **Auth:** Auth.js (NextAuth v5) — magic link email + Google OAuth
-- **Hosting:** Vercel
+TotalTidy is a capture-first home inventory app for busy parents. Users rapid-fire snap photos, Cloudinary async-removes backgrounds and auto-tags items, and the app builds a clean digital catalog organized by physical location. See [vision.md](./vision.md) for product context and [techstack.md](./techstack.md) for all stack decisions.
 
 ## Project Structure
 
@@ -20,33 +9,48 @@ src/
   app/                    # Next.js App Router pages and layouts
   server/
     routers/              # tRPC routers — one per domain (items, locations, sessions)
-    services/             # Business logic, keep routers thin
+    services/             # Business logic — keep routers thin
     db/
-      schema.ts           # Drizzle schema — single source of truth for all tables
-      index.ts            # Drizzle client instance
-  lib/                    # Shared utils, Cloudinary helpers, constants
-  components/             # React components — colocate styles, keep flat unless grouping makes sense
+      schema.ts           # Drizzle schema — single source of truth
+      index.ts            # Drizzle client (Neon prod / local postgres dev)
+  lib/                    # Shared utils, Cloudinary helpers, auth config
+  components/             # React components — flat unless grouping is obvious
   hooks/                  # Custom hooks (useCamera, useCapture, useLocationPredict)
-drizzle/                  # Auto-generated migrations via drizzle-kit
+drizzle/                  # Auto-generated migrations
 ```
 
 ## Code Conventions
 
-- **TypeScript strict mode.** No `any`. Use Drizzle's inferred types (`typeof items.$inferSelect`) for DB row types. Use tRPC's inferred types for API responses.
+- **TypeScript strict.** No `any`. Use Drizzle inferred types (`typeof items.$inferSelect`). Use tRPC inferred types for API responses.
 - **tRPC routers are thin.** Routers validate input (Zod) and call service functions. Business logic lives in `server/services/`.
 - **Drizzle schema is the source of truth.** Never write raw SQL for schema changes. Use `drizzle-kit generate` → `drizzle-kit migrate`.
-- **Components are functional.** No class components. Use hooks for state. Prefer server components where possible, mark client components explicitly with `"use client"`.
-- **File naming:** `kebab-case` for files, `PascalCase` for components, `camelCase` for functions/variables.
-- **Imports:** Use `@/` path alias mapped to `src/`.
-- **Error handling:** tRPC procedures throw `TRPCError` with appropriate codes. Client-side uses tRPC's `onError` or React error boundaries.
-- **No barrel files.** Import directly from the module.
+- **Functional components only.** No class components. Prefer server components; mark client components with `"use client"`.
+- **File naming:** `kebab-case` files, `PascalCase` components, `camelCase` functions/variables.
+- **Imports:** `@/` alias maps to `src/`. No barrel files — import directly.
+- **Error handling:** tRPC procedures throw `TRPCError` with appropriate codes. Use React error boundaries on the client.
+
+## Design System
+
+Color tokens live in `src/app/globals.css` as CSS custom properties. Palette: sage greens, soft terracottas, paper whites, warm wood tones. Typography: Fraunces for headings/display, Inter for body/UI text, JetBrains Mono for code/tokens.
+
+**Rules — apply these to every component generated or edited:**
+
+- Never use raw hex values — always reference a CSS custom property (`--color-*`) or Tailwind token
+- Never add inline styles
+- Buttons: use the shadcn/ui `<Button variant="...">` — never a raw `<button>` with ad-hoc classes
+- Inputs: consistent height `h-10`, border, and focus ring across all form elements
+- Icons: Lucide only — never mix icon sets; 16px inline, 20px standalone
+- Spacing: 4px base grid via Tailwind (p-4 = 16px, etc.)
+- Border radius: use Tailwind radius tokens only (`rounded-sm`, `rounded-md`, etc.)
+- Destructive actions: always require a confirmation step — never single-click delete
+- Loading: indicator on the trigger element, never a full-page spinner
+- Dark mode: all components must work in both light and dark mode
 
 ## Key Patterns
 
-### tRPC Procedure Pattern
+### tRPC Procedure
 
 ```typescript
-// server/routers/items.ts
 export const itemsRouter = router({
   capture: protectedProcedure
     .input(z.object({ cloudinaryPublicId: z.string(), locationId: z.string().optional() }))
@@ -56,7 +60,7 @@ export const itemsRouter = router({
 });
 ```
 
-### Drizzle Query Pattern
+### Drizzle Query
 
 ```typescript
 // Always filter by userId — no exceptions
@@ -66,68 +70,63 @@ const userItems = await db.query.items.findMany({
 });
 ```
 
-### Cloudinary Upload Pattern
+### Cloudinary Upload
 
-Client-side unsigned upload to Cloudinary, then pass the public ID to tRPC:
+Client uploads directly to Cloudinary via unsigned preset, then passes the public ID to tRPC:
 
 ```typescript
-// Client: upload blob directly to Cloudinary
 const formData = new FormData();
 formData.append('file', blob);
 formData.append('upload_preset', 'totaltidy_unsigned');
-const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-  method: 'POST', body: formData,
-});
-const { public_id } = await res.json();
+const { public_id } = await fetch(
+  `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+  { method: 'POST', body: formData }
+).then(r => r.json());
 
-// Client: tell the server about it
 trpc.items.capture.mutate({ cloudinaryPublicId: public_id, locationId });
 ```
 
 ## Domain Concepts
 
-- **Item:** A photographed object. Has an original image, a processed (background-removed) image, AI-generated label/tags, a status (inbox/kept/sell/donate), and an optional location.
-- **Location:** A physical place in the home ("Narnia Cupboard", "Toy Trunk"). Has a sort order, use count, and last-used timestamp for prediction.
-- **Capture Session:** A timed burst of photo captures. Starts on first snap, ends after 60s of inactivity. Generates a Joy-Roll summary.
-- **Unsorted Inbox:** Items captured without a location assignment. The app nudges users to triage these later.
+- **Item:** Photographed object. Has original + processed (background-removed) image, AI label/tags, status (`inbox` / `kept` / `sell` / `donate`), optional location.
+- **Location:** Physical place in the home ("Narnia Cupboard"). Has sort order, use count, last-used timestamp for smart prediction.
+- **Capture Session:** Timed burst. Starts on first snap, ends after 60s inactivity. Generates Joy-Roll summary.
+- **Unsorted Inbox:** Items captured without a location — triaged later via badge nudge.
 
-## Database
+## When You Add RBAC
 
-PostgreSQL via Neon. Key tables: `users`, `items`, `locations`, `capture_sessions`. See `src/server/db/schema.ts` for the full schema. Use JSONB columns for flexible metadata (tags, session summaries) — don't over-normalize.
+Store role on the user record in the DB. Include it in JWT claims so middleware can gate routes without a DB round-trip. Use a single `adminProcedure` that wraps `protectedProcedure` and adds the role check — never sprinkle role checks inside individual resolvers.
 
-## Environment Variables
-
+```typescript
+export const ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  MEMBER: 'member',
+} as const;
 ```
-DATABASE_URL=              # Neon Postgres connection string
-NEXTAUTH_SECRET=           # Auth.js secret
-NEXTAUTH_URL=              # App URL
-GOOGLE_CLIENT_ID=          # Google OAuth
-GOOGLE_CLIENT_SECRET=
-CLOUDINARY_CLOUD_NAME=     # Cloudinary cloud name
-CLOUDINARY_API_KEY=        # Cloudinary API key (server-side only)
-CLOUDINARY_API_SECRET=     # Cloudinary API secret (server-side only)
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=  # Client-side cloud name
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET= # Unsigned upload preset name
-```
+
+Admin routes mount at `/admin`, gated behind `SUPER_ADMIN`. The admin dashboard calls the same tRPC API — no separate API. Impersonation must log both the admin's ID and the target user's ID on every action.
+
+## When You Add Agents
+
+Start at Level 1: a single `generateObject` call validated with Zod. No tools, no loops. Only escalate when the product forces it. Every agent tool call must: (1) be scoped to `userId`, (2) be logged with agent, user, and params, (3) have a 30s timeout. Write tools require user confirmation before executing. Add Langfuse observability before shipping any agent feature.
 
 ## Testing
 
-- Use Vitest for unit tests on services and utilities
-- Use Playwright for E2E on critical flows (capture → gallery, batch assign)
-- tRPC routers tested via direct caller, not HTTP
+- Unit: Vitest + @testing-library/react. Test services and utilities; test tRPC routers via direct caller, not HTTP.
+- E2E: Playwright on critical flows (capture → gallery, batch assign).
 
 ## Common Tasks
 
-- **Add a new tRPC route:** Create procedure in relevant router → add to `appRouter` → use in component via `trpc.routerName.procedureName`
-- **Add a DB table:** Define in `schema.ts` → `pnpm drizzle-kit generate` → `pnpm drizzle-kit migrate`
-- **Add a Cloudinary transformation:** Define as a named preset in Cloudinary dashboard, reference by name in code
-- **Process webhook:** Add API route at `app/api/webhooks/cloudinary/route.ts`, verify signature, call service function
+- **New tRPC route:** Add procedure to router → add to `appRouter` → call via `trpc.routerName.procedureName`
+- **New DB table:** Define in `schema.ts` → `pnpm db:generate` → `pnpm db:migrate`
+- **New Cloudinary transform:** Define as a named preset in Cloudinary dashboard, reference by name in code
+- **Cloudinary webhook:** Handle in `app/api/webhooks/cloudinary/route.ts`, verify signature, call service
 
-## What NOT To Do
+## What NOT to Do
 
 - Don't add REST endpoints — everything goes through tRPC
 - Don't put business logic in tRPC routers — use services
-- Don't query without userId filtering — every row belongs to a user
-- Don't store Cloudinary API secrets on the client — use unsigned upload presets
-- Don't create loading spinners for image processing — the whole point is async "no spinner" UX
-- Don't over-plan V2 features — build clean interfaces now, extend later
+- Don't query without `userId` filtering — every row belongs to a user
+- Don't store Cloudinary API secrets on the client — unsigned upload presets only
+- Don't show loading spinners for image processing — async shimmer only; the "no spinner" UX is a core product principle
+- Don't build V2 features speculatively — build clean interfaces now, extend later
