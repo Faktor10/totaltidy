@@ -11,53 +11,95 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  typecheck:
+    name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
+          cache: npm
+      - run: npm ci
+      - run: npx biome check .
+      - run: npm run typecheck
+      - name: Check migrations
+        run: npm run db:check
 
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+
+    # A real ephemeral Postgres so DB-dependent specs actually run rather than
+    # silently skipping.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: totaltidy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/totaltidy_test
+      AUTH_SECRET: ci-test-secret-do-not-use-in-production
+
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+          cache: npm
+      - run: npm ci
+      - name: Apply migrations
+        run: npm run db:migrate
+      - run: npm test
 
   e2e:
     name: E2E Tests
-    needs: [lint, test]
+    needs: [typecheck, test]
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: totaltidy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/totaltidy_test
+      AUTH_SECRET: e2e-test-secret-do-not-use-in-production
+      SERVER_URL: http://localhost:3001
+      CLIENT_URL: http://localhost:3000
+      VITE_CLOUDINARY_CLOUD_NAME: test-cloud
+      VITE_CLOUDINARY_UPLOAD_PRESET: test-preset
+
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+          cache: npm
+      - run: npm ci
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run e2e
+        run: npx playwright install --with-deps chromium
+      - run: npm run e2e
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

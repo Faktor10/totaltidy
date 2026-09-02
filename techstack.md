@@ -1,83 +1,89 @@
 # TotalTidy — Stack Manifest
 
-v0.2 — Last updated: 2026-06-28
+v0.3 — Last updated: 2026-09-02
+
+Aligned to the shared house stack described in [TECHSTACK.md](./TECHSTACK.md).
 
 ## Runtime & Language
 
 | | |
 |---|---|
-| Language | TypeScript 5 (strict) |
-| Runtime | Node.js v24 (local, NVM), v20 (CI) |
-| Package manager | pnpm v10 |
-| Linter / formatter | Biome (replaces ESLint + Prettier) |
+| Language | TypeScript 5 (strict, ESM) |
+| Runtime | Node.js v20+ |
+| Package manager | npm workspaces (`apps/*`, `packages/*`) |
+| Linter / formatter | Biome + `tsc --noEmit` as the typecheck gate |
+| Server dev runner | tsx (no build step for the API) |
+
+## Monorepo shape
+
+```
+apps/client     @totaltidy/client   React SPA (Vite)
+apps/server     @totaltidy/server   Express + tRPC API
+packages/db     @totaltidy/db       Drizzle schema, migrations, DB client
+packages/shared @totaltidy/shared   Zod schemas + framework-agnostic lib code
+```
+
+One root `package.json`, one root `tsconfig.json`, one root `vitest.config.ts`.
 
 ## Frontend
 
 | | |
 |---|---|
-| Framework | Next.js 15 (App Router, Turbopack) |
-| Component library | shadcn/ui |
-| Styling | Tailwind CSS v4 (CSS-first config via globals.css) |
-| Forms | TanStack Form |
-| State | TanStack Query v5 (client); RSC (server) |
-| Animations | Framer Motion |
+| Framework | React 19 SPA via Vite |
+| Routing | wouter |
+| Component approach | shadcn/ui-style — Radix primitives + Tailwind + `cva` |
+| Styling | Tailwind CSS v4 (CSS-first) alongside existing CSS modules |
+| State | TanStack Query v5 via the tRPC client |
 | Testing | Vitest + @testing-library/react (unit); Playwright (e2e) |
 
 ## Backend
 
 | | |
 |---|---|
-| API layer | tRPC v11 + React Query |
-| Type safety | Zod v4 |
+| HTTP layer | Express 5 |
+| API layer | tRPC v11 mounted at `/trpc` |
+| Type safety | Zod v4 — input schemas shared via `@totaltidy/shared/schemas/*` |
 | Serialization | superjson |
+| Business logic | Plain functions in `apps/server/src/services/*`; routers stay thin |
 | Background jobs | N/A |
-| Message broker | N/A |
-| Realtime | N/A |
 
 ## Database & Storage
 
 | | |
 |---|---|
-| Database | PostgreSQL via Neon (serverless prod / local postgres dev) |
+| Database | PostgreSQL (Neon / Railway / local) via the `postgres-js` driver |
 | ORM | Drizzle ORM + drizzle-kit |
-| Storage | Cloudinary (upload, background removal, CDN) |
-| Cache | N/A |
-| Search | N/A |
+| Migrations | Checked in under `packages/db/drizzle/`, applied on server startup |
+| Storage | Cloudinary (upload, background removal, auto-tagging, CDN) |
 
 ## Auth
 
 | | |
 |---|---|
-| Provider | Auth.js v5 (next-auth beta) + Drizzle adapter |
-| OAuth | Google |
-| Magic link | Resend provider (via Auth.js) |
-| Strategy | JWT; userId injected into tRPC context |
-| Authorization | Session auth only — RBAC not yet implemented |
+| Strategy | Server-issued session cookie (HMAC-signed, backed by the `sessions` table) |
+| OAuth | Google via Passport in stateless mode (`session: false`) |
+| Magic link | Single-use hashed tokens emailed via Resend |
+| Authorization | `protectedProcedure` injects `userId` into tRPC context; RBAC not implemented |
 
-## Email
-
-| | |
-|---|---|
-| Transactional | Resend (also handles magic link auth) |
-| Templating | N/A — Resend default templates |
+Passport only performs the OAuth handshake — the server mints its own session
+afterward, so there is one session mechanism for every sign-in path.
 
 ## Infrastructure
 
 | | |
 |---|---|
-| Hosting | Vercel (planned) |
-| CI/CD | GitHub Actions (lint → unit → e2e on PR and main push) |
-| DNS / CDN | N/A |
-| Monitoring | N/A |
-| Analytics | N/A |
-
-## Payments
-
-N/A — planned for Phase 2 (Stripe, subscription or usage-based)
+| Hosting | Railway (`railway.json`); also runnable on Replit (`.replit`) |
+| Production topology | The API serves the built client, so both are one origin |
+| CI/CD | GitHub Actions — typecheck/lint → unit tests (real Postgres service container) → e2e |
 
 ## AI / Agentic Layer
 
-N/A — planned for Phase 2. Natural harness: Vercel AI SDK. Observability: Langfuse before shipping any agent feature to real users.
+Not yet implemented. New agentic/orchestration code is to be written against
+`effect@rc` (typed errors, structured concurrency, `Schedule`-based retry,
+`Layer`-based DI) rather than hand-rolled retry/timeout/tool-calling logic;
+existing services migrate opportunistically, not wholesale. tRPC routers remain
+the boundary — a handler runs an `Effect` pipeline internally and returns a
+plain value or throws a `TRPCError` at the edge.
 
 ---
 
@@ -85,17 +91,12 @@ N/A — planned for Phase 2. Natural harness: Vercel AI SDK. Observability: Lang
 
 | Decision | Chosen | Alternatives | Reason |
 |---|---|---|---|
+| App shape | Vite SPA + Express API | Next.js App Router | Aligns with the house stack; one API surface, no RSC/route-handler split |
+| Package manager | npm workspaces | pnpm, Turborepo | Plain `npm run -w`; no extra tooling to learn |
+| Routing | wouter | React Router | Smaller, sufficient for this route table |
 | ORM | Drizzle | Prisma | Type safety without codegen |
-| Auth | Auth.js v5 | Clerk, Better Auth | No managed-infra cost; Drizzle adapter |
-| API layer | tRPC v11 | REST, Server Actions | E2E type safety + React Query caching |
-| Database | Neon (Postgres) | Supabase, Railway | Serverless branching, free tier |
+| Auth | Session cookie + Passport | Auth.js v5 | One session mechanism, no framework coupling |
+| API layer | tRPC v11 | REST | E2E type safety + React Query caching |
+| Postgres driver | postgres-js | Neon serverless HTTP | A long-lived server does not need the serverless HTTP driver |
 | Storage | Cloudinary | Uploadthing, S3+Lambda | Background removal built-in |
 | Linter | Biome | ESLint + Prettier | Single tool, zero config |
-
-### tRPC vs Server Actions
-
-Keep tRPC. Migration cost — every query and mutation touched, React Query caching strategy rethought — is not justified at this stage. Server Actions are acceptable for new simple write-only mutations with no cache invalidation needs. Mixing paradigms in one codebase is harder to reason about than either alone; default to tRPC for consistency.
-
-### AI / Agentic Layer
-
-Build nothing speculatively. When the product needs it: start with a single structured `generateObject` call validated with Zod (no tools, no loops) — this covers ~80% of AI features. Escalate to tool use only when the LLM needs live data. Escalate to multi-step agents only when the task is genuinely too complex to decompose into a fixed sequence. Every agent tool call must be scoped to the authenticated user, logged, and have a 30-second timeout.

@@ -7,6 +7,7 @@
  * Run:  npm run cloudinary:setup
  */
 
+import "dotenv/config";
 import { v2 as cloudinary } from "cloudinary";
 
 const PRESET_NAME = "totaltidy_unsigned";
@@ -58,7 +59,7 @@ async function setup() {
   console.log(`  Max file size:   ${MAX_FILE_SIZE / 1_000_000} MB`);
   console.log(`  Mode:            unsigned`);
   console.log();
-  console.log(`Set NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="${PRESET_NAME}" in your .env.local`);
+  console.log(`Set VITE_CLOUDINARY_UPLOAD_PRESET="${PRESET_NAME}" in your .env`);
 }
 
 setup().catch((error) => {

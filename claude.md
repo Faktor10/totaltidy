@@ -4,19 +4,34 @@ TotalTidy is a capture-first home inventory app for busy parents. Users rapid-fi
 
 ## Project Structure
 
+npm workspaces — `apps/*` and `packages/*`, one root `package.json`,
+`tsconfig.json` and `vitest.config.ts` for the whole repo.
+
 ```
-src/
-  app/                    # Next.js App Router pages and layouts
-  server/
-    routers/              # tRPC routers — one per domain (items, locations, sessions)
-    services/             # Business logic — keep routers thin
-    db/
-      schema.ts           # Drizzle schema — single source of truth
-      index.ts            # Drizzle client (Neon prod / local postgres dev)
-  lib/                    # Shared utils, Cloudinary helpers, auth config
-  components/             # React components — flat unless grouping is obvious
-  hooks/                  # Custom hooks (useCamera, useCapture, useLocationPredict)
-drizzle/                  # Auto-generated migrations
+apps/
+  client/                 # @totaltidy/client — React SPA (Vite)
+    src/
+      pages/              # Route components, wired up in App.tsx (wouter)
+      components/         # React components — flat unless grouping is obvious
+        ui/               # shadcn-style primitives (Radix + Tailwind + cva)
+      hooks/              # Custom hooks (useCamera, useCloudinaryUpload, ...)
+      lib/                # Browser-only helpers, tRPC client, REST auth calls
+      styles/globals.css  # Tailwind import + design tokens
+  server/                 # @totaltidy/server — Express + tRPC API
+    src/
+      index.ts            # Boot: run migrations, then listen
+      app.ts              # Express wiring (CORS, routes, tRPC, static client)
+      routers/            # tRPC routers — one per domain (items, locations, sessions)
+      services/           # Business logic — keep routers thin
+      routes/             # Non-tRPC HTTP: auth callbacks, Cloudinary webhook
+      lib/                # session.ts, passport.ts, env.ts, cloudinary.ts
+packages/
+  db/                     # @totaltidy/db — Drizzle client, schema, migrations
+    src/tables/           # One file per table; schema.ts is the barrel
+    drizzle/              # Auto-generated migrations (checked in)
+  shared/                 # @totaltidy/shared — Zod schemas + agnostic lib code
+    src/schemas/          # tRPC input schemas, shared by client and server
+    src/lib/              # Framework-agnostic helpers
 ```
 
 ## Code Conventions
@@ -24,14 +39,17 @@ drizzle/                  # Auto-generated migrations
 - **TypeScript strict.** No `any`. Use Drizzle inferred types (`typeof items.$inferSelect`). Use tRPC inferred types for API responses.
 - **tRPC routers are thin.** Routers validate input (Zod) and call service functions. Business logic lives in `server/services/`.
 - **Drizzle schema is the source of truth.** Never write raw SQL for schema changes. Use `drizzle-kit generate` → `drizzle-kit migrate`.
-- **Functional components only.** No class components. Prefer server components; mark client components with `"use client"`.
+- **Functional components only.** No class components. The client is a plain
+  SPA — there are no server components and no `"use client"` directives.
 - **File naming:** `kebab-case` files, `PascalCase` components, `camelCase` functions/variables.
-- **Imports:** `@/` alias maps to `src/`. No barrel files — import directly.
+- **Imports:** `@/` maps to `apps/client/src/`. The server uses relative imports
+  and the `@totaltidy/db` / `@totaltidy/shared` workspace packages. No barrel
+  files — import directly.
 - **Error handling:** tRPC procedures throw `TRPCError` with appropriate codes. Use React error boundaries on the client.
 
 ## Design System
 
-Color tokens live in `src/app/globals.css` as CSS custom properties. Palette: sage greens, soft terracottas, paper whites, warm wood tones. Typography: Fraunces for headings/display, Inter for body/UI text, JetBrains Mono for code/tokens.
+Color tokens live in `apps/client/src/styles/globals.css` as CSS custom properties. Palette: sage greens, soft terracottas, paper whites, warm wood tones. Typography: Fraunces for headings/display, Inter for body/UI text, JetBrains Mono for code/tokens.
 
 **Rules — apply these to every component generated or edited:**
 
@@ -118,13 +136,16 @@ Start at Level 1: a single `generateObject` call validated with Zod. No tools, n
 ## Common Tasks
 
 - **New tRPC route:** Add procedure to router → add to `appRouter` → call via `trpc.routerName.procedureName`
-- **New DB table:** Define in `schema.ts` → `pnpm db:generate` → `pnpm db:migrate`
+- **New DB table:** Add a file under `packages/db/src/tables/`, export it from
+  `schema.ts` → `npm run db:generate` → migrations apply on the next server boot
 - **New Cloudinary transform:** Define as a named preset in Cloudinary dashboard, reference by name in code
-- **Cloudinary webhook:** Handle in `app/api/webhooks/cloudinary/route.ts`, verify signature, call service
+- **Cloudinary webhook:** Handle in `apps/server/src/routes/cloudinary-webhook.ts`,
+  verify signature over the raw body, call service
 
 ## What NOT to Do
 
-- Don't add REST endpoints — everything goes through tRPC
+- Don't add REST endpoints — everything goes through tRPC. The only exceptions
+  are the auth callbacks and the Cloudinary webhook, which must be plain HTTP.
 - Don't put business logic in tRPC routers — use services
 - Don't query without `userId` filtering — every row belongs to a user
 - Don't store Cloudinary API secrets on the client — unsigned upload presets only

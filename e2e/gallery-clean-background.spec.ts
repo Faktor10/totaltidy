@@ -70,12 +70,18 @@ test.describe("gallery clean background", () => {
       if (name === "locations.list") {
         return trpcResult([]);
       }
+      if (name === "me") {
+        return trpcResult({
+          userId: "user-e2e",
+          user: { id: "user-e2e", email: "e2e@example.com", name: null, image: null },
+        });
+      }
       return null;
     };
 
-    await page.route("**/api/trpc/**", (route, request) => {
+    await page.route("**/trpc/**", (route, request) => {
       const url = new URL(request.url());
-      const trpcPath = url.pathname.replace("/api/trpc/", "");
+      const trpcPath = url.pathname.replace("/trpc/", "");
       const procedures = trpcPath.split(",");
       const isBatch = url.searchParams.has("batch");
 

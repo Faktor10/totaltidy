@@ -1,4 +1,4 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "postgresql-16"]
 
 [workflows]
 runButton = "Project"
@@ -10,15 +10,28 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
+args = "API server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Web client"
 
 [[workflows.workflow]]
-name = "Start application"
+name = "API server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm dev"
+args = "npm run dev:server"
+waitForPort = 3001
+
+[[workflows.workflow]]
+name = "Web client"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev:client"
 waitForPort = 3000
 
 [workflows.workflow.metadata]
@@ -27,3 +40,7 @@ outputType = "webview"
 [[ports]]
 localPort = 3000
 externalPort = 80
+
+[[ports]]
+localPort = 3001
+externalPort = 3001

@@ -1,0 +1,215 @@
+.page {
+  min-height: 100vh;
+  padding: 1.5rem 1rem;
+  background: var(--color-paper-warm);
+  font-family: var(--font-family);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-wood-950);
+}
+
+.count {
+  font-size: var(--text-base);
+  color: var(--color-wood-500);
+  font-weight: var(--weight-regular);
+}
+
+.captureLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  background: var(--color-sage-700);
+  color: var(--color-surface);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition:
+    background var(--duration-fast) ease,
+    transform var(--duration-normal) var(--ease-bounce);
+}
+
+.captureLink:hover {
+  background: var(--color-sage-800);
+}
+
+.captureLink:active {
+  transform: scale(0.95);
+  transition-duration: 80ms;
+  transition-timing-function: ease-in;
+}
+
+/* Location group */
+.locationGroup {
+  margin-bottom: 2rem;
+}
+
+.locationHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-sand-200);
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.15s ease;
+}
+
+a.locationHeader:hover {
+  opacity: 0.7;
+}
+
+.locationIcon {
+  font-size: var(--text-lg);
+}
+
+.locationName {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-wood-800);
+}
+
+.locationCount {
+  font-size: var(--text-sm);
+  color: var(--color-wood-400);
+  font-weight: var(--weight-regular);
+  margin-left: auto;
+}
+
+/* Item grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.cardWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.card {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px var(--color-shadow-card);
+  aspect-ratio: 1;
+  transition:
+    transform var(--duration-normal) var(--ease-bounce),
+    box-shadow var(--duration-normal) ease;
+}
+
+.cardWrapper:hover .card {
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px var(--color-shadow-card);
+}
+
+.cardWrapper:active .card {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+  transition-timing-function: ease-in;
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemLabel {
+  display: block;
+  padding: 0 0.25rem;
+  color: var(--color-wood-600);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  color: var(--color-wood-400);
+}
+
+.emptyIcon {
+  font-size: var(--text-4xl);
+}
+
+.emptyTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-wood-800);
+}
+
+.emptyText {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  max-width: 280px;
+}
+
+/* Loading and error states */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--color-wood-400);
+  font-size: var(--text-base);
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  color: var(--color-error);
+  font-size: var(--text-base);
+}
+
+.retryButton {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-error);
+  background: transparent;
+  color: var(--color-error);
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) ease,
+    transform var(--duration-normal) var(--ease-bounce);
+}
+
+.retryButton:hover {
+  background: rgba(187, 68, 68, 0.05);
+}
+
+.retryButton:active {
+  transform: scale(0.95);
+}

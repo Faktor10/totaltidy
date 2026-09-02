@@ -23,6 +23,10 @@ test.describe("unauthenticated user redirect", () => {
   test("includes callbackUrl in redirect", async ({ page }) => {
     await page.goto("/dashboard");
 
+    // The guard redirects from the client once the session check resolves,
+    // so wait for the redirect before reading the query string.
+    await expect(page).toHaveURL(/\/auth\/sign-in/);
+
     const url = new URL(page.url());
     expect(url.searchParams.get("callbackUrl")).toBe("/dashboard");
   });
