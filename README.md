@@ -4,7 +4,8 @@
 
 TotalTidy is a capture-first home inventory app for busy parents. Point your phone at the mess, rapid-fire snap photos, and TotalTidy handles background removal, AI labeling, and catalog generation — all asynchronously, with zero spinners.
 
-See [vision.md](./vision.md) for the full product vision and [techstack.md](./techstack.md) for the full stack manifest.
+See [vision.md](./vision.md) for the full product vision and
+[TECHSTACK.md](./TECHSTACK.md) for the full stack manifest.
 
 ---
 
@@ -22,63 +23,80 @@ See [vision.md](./vision.md) for the full product vision and [techstack.md](./te
 
 ---
 
+## Repository layout
+
+npm **workspaces** — plain `npm run <script> -w <package>`, no Turborepo/Nx.
+
+```
+apps/
+  client/     @totaltidy/client   — React SPA (Vite + wouter)
+  server/     @totaltidy/server   — Express + tRPC API
+packages/
+  db/         @totaltidy/db       — Drizzle schema, migrations, DB client
+  shared/     @totaltidy/shared   — Zod schemas + framework-agnostic lib code
+```
+
+One root `package.json` owns the shared dependencies, one root `tsconfig.json`
+typechecks the whole repo in a single pass, and one root `vitest.config.ts` runs
+every workspace's tests.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- [Neon](https://neon.tech) Postgres database
+- A PostgreSQL database ([Neon](https://neon.tech), Railway, or local)
 - [Cloudinary](https://cloudinary.com) account
-- [Resend](https://resend.com) account (for magic link email)
+- [Resend](https://resend.com) account (optional — for magic-link email)
 
 ### 1. Install dependencies
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 2. Configure environment
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Required variables:
 
 ```
 DATABASE_URL=
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=
-AUTH_RESEND_KEY=
-AUTH_GOOGLE_ID=
-AUTH_GOOGLE_SECRET=
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
+AUTH_SECRET=
+CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 CLOUDINARY_WEBHOOK_SECRET=
+VITE_CLOUDINARY_CLOUD_NAME=
+VITE_CLOUDINARY_UPLOAD_PRESET=
 ```
 
-### 3. Set up the database
+Optional (each degrades gracefully when unset): `AUTH_GOOGLE_ID`,
+`AUTH_GOOGLE_SECRET`, `AUTH_RESEND_KEY`, `SERVER_URL`, `CLIENT_URL`.
+
+### 3. Set up Cloudinary
 
 ```bash
-pnpm db:generate
-pnpm db:migrate
+npm run cloudinary:setup
 ```
 
-### 4. Set up Cloudinary
+### 4. Run the dev servers
 
 ```bash
-pnpm cloudinary:setup
+npm run dev
 ```
 
-### 5. Run the dev server
+This starts the API on [http://localhost:3001](http://localhost:3001) and the
+client on [http://localhost:3000](http://localhost:3000), with Vite proxying
+`/api` and `/trpc` to the API. Migrations are applied automatically when the API
+boots — in every environment — so there is no separate migration step.
 
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
+Run them individually with `npm run dev:server` / `npm run dev:client`.
 
 ---
 
@@ -87,20 +105,24 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Quality gate — all three must pass before merge
 
 ```bash
-pnpm lint      # Biome
-pnpm test      # Vitest unit tests
-pnpm e2e       # Playwright E2E
+npm run lint   # Biome + tsc --noEmit
+npm test       # Vitest unit tests
+npm run e2e    # Playwright E2E
 ```
 
 ### Commands
 
 ```bash
-pnpm lint:fix     # Auto-fix lint issues
-pnpm format       # Format all files
-pnpm test:watch   # Vitest watch mode
-pnpm e2e:ui       # Playwright UI mode
-pnpm db:generate  # Generate Drizzle migrations
-pnpm db:migrate   # Apply migrations
+npm run typecheck    # tsc --noEmit across the whole repo
+npm run lint:fix     # Auto-fix lint issues
+npm run format       # Format all files
+npm run test:watch   # Vitest watch mode
+npm run e2e:ui       # Playwright UI mode
+npm run db:generate  # Generate Drizzle migrations from schema changes
+npm run db:migrate   # Apply migrations manually
+npm run db:check     # Guard against orphaned/drifted migrations
+npm run build        # Build the client for production
+npm start            # Serve the API (and the built client) in production
 ```
 
 Coding conventions are in [claude.md](./claude.md).

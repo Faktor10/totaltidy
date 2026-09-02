@@ -1,27 +1,38 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
+    "skipLibCheck": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "verbatimModuleSyntax": false,
+    "types": ["node", "vitest/globals"],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["apps/client/src/*"],
+      "@totaltidy/shared/*": ["packages/shared/src/*"],
+      "@totaltidy/db": ["packages/db/src/index.ts"],
+      "@totaltidy/db/schema": ["packages/db/src/schema.ts"],
+      "@totaltidy/db/helpers": ["packages/db/src/helpers.ts"],
+      "@totaltidy/db/migrate": ["packages/db/src/migrate.ts"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "packages/**/*.ts",
+    "e2e/**/*.ts",
+    "scripts/**/*.ts",
+    "*.config.ts"
+  ],
+  "exclude": ["node_modules", "**/dist", "lib"]
 }

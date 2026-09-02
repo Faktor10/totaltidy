@@ -1,5 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:3000";
+const SERVER_URL = process.env.SERVER_URL ?? "http://localhost:3001";
+
+const serverEnv = {
+  DATABASE_URL:
+    process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5432/totaltidy_test",
+  AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-test-secret-do-not-use-in-production",
+  SERVER_URL,
+  CLIENT_URL,
+};
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -8,7 +19,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: CLIENT_URL,
     trace: "on-first-retry",
   },
   projects: [
@@ -22,18 +33,23 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    env: {
-      DATABASE_URL:
-        process.env.DATABASE_URL || "postgresql://test:test@localhost:5432/totaltidy_test",
-      AUTH_SECRET: process.env.AUTH_SECRET || "e2e-test-secret-do-not-use-in-production",
-      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
-        process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "test-cloud",
-      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET:
-        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "test-preset",
+  // Two processes now: the API, and the Vite dev server that proxies to it.
+  webServer: [
+    {
+      command: "npm run dev:server",
+      url: `${SERVER_URL}/api/health`,
+      reuseExistingServer: !process.env.CI,
+      env: serverEnv,
     },
-  },
+    {
+      command: "npm run dev:client",
+      url: CLIENT_URL,
+      reuseExistingServer: !process.env.CI,
+      env: {
+        SERVER_URL,
+        VITE_CLOUDINARY_CLOUD_NAME: process.env.VITE_CLOUDINARY_CLOUD_NAME ?? "test-cloud",
+        VITE_CLOUDINARY_UPLOAD_PRESET: process.env.VITE_CLOUDINARY_UPLOAD_PRESET ?? "test-preset",
+      },
+    },
+  ],
 });

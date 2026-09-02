@@ -1,13 +1,12 @@
 # dependencies
-/node_modules
-/.pnpm-store
+node_modules/
 
-# next.js
-/.next/
-/out/
-
-# production
+# build output
+dist/
 /build
+
+# vite
+.vite/
 
 # misc
 .DS_Store
@@ -23,12 +22,8 @@ yarn-error.log*
 .env
 .env*.local
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # drizzle
 # Note: drizzle/meta/ must be tracked — drizzle-kit needs snapshots for incremental migrations
