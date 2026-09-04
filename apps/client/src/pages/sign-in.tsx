@@ -95,7 +95,9 @@ export default function SignInPage() {
         </p>
       )}
 
-      {!providers && !providersFailed && <p className={styles.subtitle}>Loading sign-in options...</p>}
+      {!providers && !providersFailed && (
+        <p className={styles.subtitle}>Loading sign-in options...</p>
+      )}
 
       {providers && !providers.google && !providers.email && (
         <p className={styles.error}>
