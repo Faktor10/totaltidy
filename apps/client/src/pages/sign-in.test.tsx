@@ -6,6 +6,8 @@ vi.mock("@/lib/api", () => ({
   fetchAuthProviders: vi.fn(),
   googleSignInUrl: (callbackUrl?: string) =>
     callbackUrl ? `/api/auth/google?callbackUrl=${callbackUrl}` : "/api/auth/google",
+  devSignInUrl: (callbackUrl?: string) =>
+    callbackUrl ? `/api/auth/dev-login?callbackUrl=${callbackUrl}` : "/api/auth/dev-login",
   requestMagicLink: vi.fn(),
 }));
 
@@ -21,7 +23,7 @@ describe("SignInPage", () => {
   });
 
   it("renders the email form even when no provider is configured", async () => {
-    mockProviders.mockResolvedValue({ google: false, email: false });
+    mockProviders.mockResolvedValue({ google: false, email: false, devLogin: false });
     render(<SignInPage />);
 
     await waitFor(() => {
@@ -41,7 +43,7 @@ describe("SignInPage", () => {
   });
 
   it("shows the Google button and a separator only when Google is configured", async () => {
-    mockProviders.mockResolvedValue({ google: true, email: true });
+    mockProviders.mockResolvedValue({ google: true, email: true, devLogin: false });
     render(<SignInPage />);
 
     await waitFor(() => {
@@ -51,7 +53,7 @@ describe("SignInPage", () => {
   });
 
   it("hides the Google button when Google is not configured", async () => {
-    mockProviders.mockResolvedValue({ google: false, email: true });
+    mockProviders.mockResolvedValue({ google: false, email: true, devLogin: false });
     render(<SignInPage />);
 
     await waitFor(() => {
@@ -62,11 +64,30 @@ describe("SignInPage", () => {
   });
 
   it("warns when email delivery is unconfigured", async () => {
-    mockProviders.mockResolvedValue({ google: false, email: false });
+    mockProviders.mockResolvedValue({ google: false, email: false, devLogin: false });
     render(<SignInPage />);
 
     await waitFor(() => {
       expect(screen.getByText(/written to the server log/i)).toBeDefined();
     });
+  });
+
+  it("shows the dev test-user button only when dev login is enabled", async () => {
+    mockProviders.mockResolvedValue({ google: false, email: true, devLogin: true });
+    render(<SignInPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Continue as test user/i)).toBeDefined();
+    });
+  });
+
+  it("hides the dev test-user button when dev login is disabled", async () => {
+    mockProviders.mockResolvedValue({ google: false, email: true, devLogin: false });
+    render(<SignInPage />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Email address")).toBeDefined();
+    });
+    expect(screen.queryByText(/Continue as test user/i)).toBeNull();
   });
 });
