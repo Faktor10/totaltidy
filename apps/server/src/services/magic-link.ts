@@ -3,7 +3,7 @@ import type { Database } from "@totaltidy/db";
 import { verificationTokens } from "@totaltidy/db/schema";
 import { and, eq, lt } from "drizzle-orm";
 import { Resend } from "resend";
-import { env, hasEmailAuth } from "../lib/env";
+import { env, hasResendEmail } from "../lib/env";
 
 export const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
 
@@ -56,7 +56,7 @@ export function buildMagicLinkUrl(email: string, token: string, callbackUrl?: st
  * hard-crashing, matching how the other optional integrations degrade.
  */
 export async function sendMagicLinkEmail(email: string, link: string): Promise<void> {
-  if (!hasEmailAuth()) {
+  if (!hasResendEmail()) {
     console.warn(`[auth] AUTH_RESEND_KEY unset — magic link for ${email}: ${link}`);
     return;
   }

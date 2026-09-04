@@ -49,7 +49,16 @@ export function hasGoogleOAuth(): boolean {
   return Boolean(env.google.clientId && env.google.clientSecret);
 }
 
-/** Magic-link email is optional — without Resend the form is hidden. */
-export function hasEmailAuth(): boolean {
+/** Whether a magic-link email can actually be delivered over Resend. */
+export function hasResendEmail(): boolean {
   return Boolean(env.resend.apiKey);
+}
+
+/**
+ * Whether the magic-link flow is offered at all. The server can mint and
+ * consume links without Resend — it logs them instead — so in development the
+ * form stays available and only production requires a real mail provider.
+ */
+export function hasEmailAuth(): boolean {
+  return hasResendEmail() || !env.isProduction;
 }
