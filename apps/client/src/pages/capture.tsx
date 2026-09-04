@@ -74,14 +74,21 @@ export default function CapturePage() {
     }
   }, [lastUsedLocation]);
 
+  // endSessionMutation is a new object on every render (tRPC/react-query does
+  // not memoize the mutation result), so it can't be a dependency here without
+  // re-running this effect - and thus re-registering its cleanup - on every
+  // render. A ref keeps the latest mutate fn reachable without that churn,
+  // and this must stay mount-once so the cleanup only fires on actual unmount.
+  const endSessionRef = useRef(endSessionMutation.mutate);
+  endSessionRef.current = endSessionMutation.mutate;
+
   useEffect(() => {
-    const currentSessionId = sessionIdRef.current;
     return () => {
-      if (currentSessionId) {
-        endSessionMutation.mutate({ sessionId: currentSessionId });
+      if (sessionIdRef.current) {
+        endSessionRef.current({ sessionId: sessionIdRef.current });
       }
     };
-  }, [endSessionMutation]);
+  }, []);
 
   const handleCapture = useCallback(
     async (blob: Blob) => {
