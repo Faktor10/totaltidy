@@ -1,10 +1,9 @@
-import { Route, Switch } from "wouter";
+import { Redirect, Route, Switch } from "wouter";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProtectedRoute } from "@/components/protected-route";
 import CapturePage from "@/pages/capture";
 import DashboardPage from "@/pages/dashboard";
 import GalleryPage from "@/pages/gallery";
-import HomePage from "@/pages/home";
 import InboxPage from "@/pages/inbox";
 import LocationDetailPage from "@/pages/location-detail";
 import NotFoundPage from "@/pages/not-found";
@@ -14,7 +13,9 @@ export function App() {
   return (
     <>
       <Switch>
-        <Route path="/" component={HomePage} />
+        <Route path="/">
+          <Redirect to="/auth/sign-in" replace />
+        </Route>
         <Route path="/auth/sign-in" component={SignInPage} />
 
         <Route path="/dashboard">
