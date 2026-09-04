@@ -47,62 +47,61 @@ export default function SignInPage() {
         </p>
       )}
 
-      {providers?.google && (
-        <a className={styles.googleButton} href={googleSignInUrl(callbackUrl)}>
-          Continue with Google
-        </a>
-      )}
-
-      {providers?.email && (
-        <>
-          {providers.google && <div className={styles.divider}>or</div>}
-
-          {status === "sent" ? (
-            <p className={styles.sent} role="status">
-              Check your inbox — we sent a sign-in link to {email}.
-            </p>
-          ) : (
-            <form className={styles.form} onSubmit={handleSubmit}>
-              <label className={styles.label} htmlFor="email">
-                Email address
-              </label>
-              <input
-                id="email"
-                className={styles.input}
-                type="email"
-                name="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-              <button className={styles.submit} type="submit" disabled={status === "sending"}>
-                {status === "sending" ? "Sending..." : "Email me a sign-in link"}
-              </button>
-              {status === "error" && (
-                <p className={styles.error} role="alert">
-                  Could not send the link. Please try again.
-                </p>
-              )}
-            </form>
-          )}
-        </>
-      )}
-
       {providersFailed && (
         <p className={styles.error} role="alert">
           Could not reach the sign-in service. Check that the API server is running, then reload.
         </p>
       )}
 
-      {!providers && !providersFailed && (
-        <p className={styles.subtitle}>Loading sign-in options...</p>
+      {/*
+        The email form is the primary sign-in path and always renders — gating it
+        on provider config is what previously left this page with no way in.
+      */}
+      {status === "sent" ? (
+        <p className={styles.sent} role="status">
+          Check your inbox — we sent a sign-in link to {email}.
+        </p>
+      ) : (
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <label className={styles.label} htmlFor="email">
+            Email address
+          </label>
+          <input
+            id="email"
+            className={styles.input}
+            type="email"
+            name="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+          <button className={styles.submit} type="submit" disabled={status === "sending"}>
+            {status === "sending" ? "Sending..." : "Email me a sign-in link"}
+          </button>
+          {status === "error" && (
+            <p className={styles.error} role="alert">
+              Could not send the link. Please try again.
+            </p>
+          )}
+        </form>
       )}
 
-      {providers && !providers.google && !providers.email && (
-        <p className={styles.error}>
-          No sign-in method is configured. Set AUTH_GOOGLE_ID/AUTH_GOOGLE_SECRET or AUTH_RESEND_KEY.
+      {providers && !providers.email && (
+        <p className={styles.subtitle}>
+          Email delivery is not configured — the sign-in link is written to the server log instead
+          of being sent.
         </p>
+      )}
+
+      {/* Google is genuinely unavailable without OAuth credentials, so it stays gated. */}
+      {providers?.google && (
+        <>
+          <div className={styles.divider}>or</div>
+          <a className={styles.googleButton} href={googleSignInUrl(callbackUrl)}>
+            Continue with Google
+          </a>
+        </>
       )}
     </main>
   );

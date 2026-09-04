@@ -3,15 +3,19 @@ import styles from "./bottom-nav.module.css";
 import { InboxBadge } from "./inbox-badge";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Home", icon: "⌂" },
   { href: "/capture", label: "Capture", icon: "\u{1F4F7}" },
   { href: "/inbox", label: "Inbox", icon: "\u{1F4E5}", showBadge: true },
   { href: "/gallery", label: "Gallery", icon: "\u{1F5BC}" },
   { href: "/dashboard", label: "Dashboard", icon: "\u{1F4CA}" },
 ] as const;
 
+/** The nav is for signed-in navigation only, so it stays off the auth screens. */
 export function BottomNav() {
   const [pathname] = useLocation();
+
+  if (pathname === "/" || pathname.startsWith("/auth/")) {
+    return null;
+  }
 
   return (
     <nav className={styles.nav} data-testid="bottom-nav">
