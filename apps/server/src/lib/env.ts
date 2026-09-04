@@ -62,3 +62,11 @@ export function hasResendEmail(): boolean {
 export function hasEmailAuth(): boolean {
   return hasResendEmail() || !env.isProduction;
 }
+
+/**
+ * One-click sign-in as a fixed test user, for local dev and preview
+ * environments only — never available once NODE_ENV=production.
+ */
+export function hasDevLogin(): boolean {
+  return !env.isProduction;
+}

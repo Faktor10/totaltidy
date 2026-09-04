@@ -2,7 +2,7 @@ import { db } from "@totaltidy/db";
 import { magicLinkRequestInput } from "@totaltidy/shared/schemas/auth";
 import { Router } from "express";
 import passport from "passport";
-import { env, hasEmailAuth, hasGoogleOAuth } from "../lib/env";
+import { env, hasDevLogin, hasEmailAuth, hasGoogleOAuth } from "../lib/env";
 import { attachSessionCookie, destroySession, resolveSession } from "../lib/session";
 import {
   buildMagicLinkUrl,
@@ -28,7 +28,7 @@ export function authRouter(): Router {
   const router = Router();
 
   router.get("/providers", (_req, res) => {
-    res.json({ google: hasGoogleOAuth(), email: hasEmailAuth() });
+    res.json({ google: hasGoogleOAuth(), email: hasEmailAuth(), devLogin: hasDevLogin() });
   });
 
   router.get("/session", async (req, res) => {
@@ -73,6 +73,20 @@ export function authRouter(): Router {
       res.redirect(safeRedirect(req.query.state));
     },
   );
+
+  // ── Dev login (local/preview only) ─────────────────────────────────────
+  // Signs straight in as a fixed test user, bypassing email/OAuth entirely,
+  // so the app is reachable without provisioning real credentials.
+  router.get("/dev-login", async (req, res) => {
+    if (!hasDevLogin()) {
+      res.status(404).json({ error: "Dev login is not available" });
+      return;
+    }
+
+    const user = await upsertEmailUser(db, "testuser@totaltidy.dev");
+    await attachSessionCookie(res, user.id);
+    res.redirect(safeRedirect(req.query.callbackUrl));
+  });
 
   // ── Magic link (Resend) ────────────────────────────────────────────────
   router.post("/magic-link", async (req, res) => {

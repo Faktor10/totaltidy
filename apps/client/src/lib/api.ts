@@ -1,6 +1,7 @@
 export interface AuthProviders {
   google: boolean;
   email: boolean;
+  devLogin: boolean;
 }
 
 export async function fetchAuthProviders(): Promise<AuthProviders> {
@@ -25,6 +26,12 @@ export async function signOut(): Promise<void> {
 
 export function googleSignInUrl(callbackUrl?: string): string {
   const url = new URL("/api/auth/google", window.location.origin);
+  if (callbackUrl) url.searchParams.set("callbackUrl", callbackUrl);
+  return url.toString();
+}
+
+export function devSignInUrl(callbackUrl?: string): string {
+  const url = new URL("/api/auth/dev-login", window.location.origin);
   if (callbackUrl) url.searchParams.set("callbackUrl", callbackUrl);
   return url.toString();
 }

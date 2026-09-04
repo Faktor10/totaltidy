@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 import type { AuthProviders } from "@/lib/api";
-import { fetchAuthProviders, googleSignInUrl, requestMagicLink } from "@/lib/api";
+import { devSignInUrl, fetchAuthProviders, googleSignInUrl, requestMagicLink } from "@/lib/api";
 import styles from "./sign-in.module.css";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -100,6 +100,16 @@ export default function SignInPage() {
           <div className={styles.divider}>or</div>
           <a className={styles.googleButton} href={googleSignInUrl(callbackUrl)}>
             Continue with Google
+          </a>
+        </>
+      )}
+
+      {/* Dev-only: skips email/OAuth entirely so the app is reachable without setup. */}
+      {providers?.devLogin && (
+        <>
+          <div className={styles.divider}>or</div>
+          <a className={styles.googleButton} href={devSignInUrl(callbackUrl)}>
+            Continue as test user (dev only)
           </a>
         </>
       )}
