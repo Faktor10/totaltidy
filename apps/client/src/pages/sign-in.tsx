@@ -15,13 +15,14 @@ export default function SignInPage() {
   const errorCode = searchParams.get("error");
 
   const [providers, setProviders] = useState<AuthProviders | null>(null);
+  const [providersFailed, setProvidersFailed] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   useEffect(() => {
     fetchAuthProviders()
       .then(setProviders)
-      .catch(() => setProviders({ google: false, email: false }));
+      .catch(() => setProvidersFailed(true));
   }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -87,6 +88,14 @@ export default function SignInPage() {
           )}
         </>
       )}
+
+      {providersFailed && (
+        <p className={styles.error} role="alert">
+          Could not reach the sign-in service. Check that the API server is running, then reload.
+        </p>
+      )}
+
+      {!providers && !providersFailed && <p className={styles.subtitle}>Loading sign-in options...</p>}
 
       {providers && !providers.google && !providers.email && (
         <p className={styles.error}>
