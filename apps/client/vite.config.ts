@@ -14,6 +14,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: ["268d7435-9473-4aaf-8cb0-2b125ccf3a2a-00-2283auaec5dwo.worf.replit.dev"],
     port: 3000,
     // The SPA and the API run on different ports in dev; proxying keeps the
     // browser on one origin so the session cookie is sent as first-party.
