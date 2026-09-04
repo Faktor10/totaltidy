@@ -68,5 +68,6 @@ export function hasEmailAuth(): boolean {
  * environments only — never available once NODE_ENV=production.
  */
 export function hasDevLogin(): boolean {
+  console.log("SERVER", env.isProduction)
   return !env.isProduction;
 }
