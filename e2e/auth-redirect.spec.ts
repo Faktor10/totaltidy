@@ -31,10 +31,17 @@ test.describe("unauthenticated user redirect", () => {
     expect(url.searchParams.get("callbackUrl")).toBe("/dashboard");
   });
 
-  test("does not redirect the public homepage", async ({ page }) => {
+  test("redirects the root route to sign-in", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page).toHaveURL("http://localhost:3000/");
-    await expect(page.getByRole("heading", { name: "TotalTidy" })).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/sign-in/);
+    await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
+  });
+
+  test("hides the bottom nav on the sign-in page", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(page).toHaveURL(/\/auth\/sign-in/);
+    await expect(page.getByTestId("bottom-nav")).toHaveCount(0);
   });
 });
