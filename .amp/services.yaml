@@ -1,0 +1,19 @@
+# The root .env is sourced explicitly: the server imports the DB client before
+# dotenv runs (and from apps/server, not the root), and Vite reads .env from
+# apps/client.
+services:
+  api:
+    command: set -a && . ./.env && set +a && npm run dev:server
+    port: 3001
+    health: /api/health
+    env:
+      # Post-sign-in redirects and OAuth/magic-link callbacks must use the
+      # public portal origin; Vite proxies /api and /trpc to this service.
+      CLIENT_URL: ${services.web.publicURL}
+      SERVER_URL: ${services.web.publicURL}
+  web:
+    command: set -a && . ./.env && set +a && npm run dev:client -- --strictPort
+    port: 3000
+    portal:
+      title: TotalTidy
+      description: Use the dev login on the sign-in page; magic links are printed in the api service logs.

@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb for TotalTidy: Postgres, npm deps, Playwright Chromium,
+# and a local .env. Idempotent; safe to re-run on a warm snapshot.
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+step() {
+  local label=$1
+  shift
+  local start=$SECONDS
+  echo "==> $label"
+  "$@"
+  echo "    done in $((SECONDS - start))s"
+}
+
+install_postgres() {
+  if ! command -v pg_ctlcluster >/dev/null 2>&1; then
+    sudo apt-get update -qq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql >/dev/null
+  fi
+
+  # Ephemeral orb: trade durability for speed.
+  local conf
+  conf=$(ls /etc/postgresql/*/main/conf.d -d | head -n1)/amp-orb.conf
+  if [ ! -f "$conf" ]; then
+    printf 'fsync = off\nsynchronous_commit = off\nfull_page_writes = off\n' | sudo tee "$conf" >/dev/null
+    sudo systemctl restart postgresql
+  fi
+  # systemd owns the server, so it survives setup and starts in restored snapshots.
+  sudo systemctl enable --now postgresql >/dev/null 2>&1
+  until pg_isready -q -h localhost; do sleep 0.5; done
+
+  # Match CI and playwright.config.ts defaults: postgres:postgres@localhost:5432.
+  sudo -u postgres psql -q -c "ALTER USER postgres PASSWORD 'postgres';"
+  local db
+  for db in totaltidy totaltidy_test; do
+    if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname = '$db'" | grep -q 1; then
+      sudo -u postgres createdb "$db"
+    fi
+  done
+}
+
+write_env() {
+  if [ ! -f .env ]; then
+    # PORT/SERVER_URL/CLIENT_URL are left unset so the defaults (or the values
+    # from .amp/services.yaml) apply after `. ./.env`.
+    sed \
+      -e '/^\(PORT\|SERVER_URL\|CLIENT_URL\)=/d' \
+      -e 's|^DATABASE_URL=.*|DATABASE_URL="postgresql://postgres:postgres@localhost:5432/totaltidy"|' \
+      -e "s|^AUTH_SECRET=.*|AUTH_SECRET=\"$(openssl rand -base64 32)\"|" \
+      -e 's|^VITE_CLOUDINARY_CLOUD_NAME=.*|VITE_CLOUDINARY_CLOUD_NAME="test-cloud"|' \
+      -e 's|^VITE_CLOUDINARY_UPLOAD_PRESET=.*|VITE_CLOUDINARY_UPLOAD_PRESET="test-preset"|' \
+      .env.example >.env
+  fi
+}
+
+migrate_db() {
+  # migrate.ts does not load .env, so pass the URL explicitly.
+  local db
+  for db in totaltidy totaltidy_test; do
+    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$db" npm run --silent db:migrate
+  done
+}
+
+write_agent_notes() {
+  local file="$HOME/.config/amp/AGENTS.md" marker="# TotalTidy orb notes"
+  mkdir -p "$(dirname "$file")"
+  grep -Fqx "$marker" "$file" 2>/dev/null && return 0
+  cat >>"$file" <<'EOF'
+
+# TotalTidy orb notes
+- Postgres 15 runs under systemd: postgres:postgres@localhost:5432, databases `totaltidy` (dev, used by `.env`) and `totaltidy_test` (Playwright default).
+- `amp orb services ensure` starts `api` (3001) and `web` (3000, portal). Sign in via `/api/auth/dev-login`; magic links are logged by the `api` service.
+- The server does not load `.env` before connecting to the DB, so run it manually with `set -a && . ./.env && set +a && npm run dev:server`.
+- `npm run db:migrate` needs `DATABASE_URL` in the environment (same `. ./.env` trick).
+- Stop `api` and `web` (`amp orb service stop api`, `amp orb service stop web`) before `npm run e2e`, otherwise Playwright reuses them with portal URLs.
+EOF
+}
+
+step "Postgres" install_postgres
+# Warm runs reuse the npm cache restored from the snapshot (~5s).
+step "npm dependencies" npm ci --no-audit --no-fund
+# System libraries for Chromium are already in the orb base image.
+step "Playwright Chromium" npx playwright install chromium
+step ".env" write_env
+step "Migrations" migrate_db
+step "Agent notes" write_agent_notes
