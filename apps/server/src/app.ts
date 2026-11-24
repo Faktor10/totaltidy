@@ -3,8 +3,10 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { type Express } from "express";
+import helmet from "helmet";
 import { env } from "./lib/env";
 import { configurePassport } from "./lib/passport";
+import { authLimiter } from "./lib/rate-limit";
 import { appRouter } from "./routers";
 import { authRouter } from "./routes/auth";
 import { webhooksRouter } from "./routes/cloudinary-webhook";
@@ -16,6 +18,23 @@ export function createApp(): Express {
   const app = express();
 
   app.set("trust proxy", 1);
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
+          mediaSrc: ["'self'", "blob:"],
+          connectSrc: ["'self'", "https://api.cloudinary.com"],
+          objectSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+    }),
+  );
   app.use(cookieParser());
 
   // In dev the SPA is served by Vite on another origin, so it needs CORS with
@@ -33,7 +52,7 @@ export function createApp(): Express {
     res.json({ status: "ok" });
   });
 
-  app.use("/api/auth", authRouter());
+  app.use("/api/auth", authLimiter, authRouter());
 
   app.use(
     "/trpc",
