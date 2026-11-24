@@ -63,7 +63,21 @@ export function createApp(): Express {
   );
 
   if (env.isProduction) {
-    app.use(express.static(CLIENT_DIST));
+    app.use(
+      express.static(CLIENT_DIST, {
+        setHeaders(res, filePath) {
+          // The SW and manifest must revalidate so updates reach installed apps.
+          // Hashed /assets files keep express.static's defaults.
+          const name = path.basename(filePath);
+          if (name === "sw.js" || name === "manifest.webmanifest") {
+            res.setHeader("Cache-Control", "no-cache");
+          }
+          if (name === "manifest.webmanifest") {
+            res.setHeader("Content-Type", "application/manifest+json");
+          }
+        },
+      }),
+    );
     // SPA fallback: anything that is not an API route renders the client.
     app.get(/^\/(?!api\/|trpc\/).*/, (_req, res) => {
       res.sendFile(path.join(CLIENT_DIST, "index.html"));

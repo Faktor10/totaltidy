@@ -1,0 +1,80 @@
+/* Layout lives here (not Tailwind utilities): the unlayered global reset in globals.css
+   would override Tailwind's padding/margin utilities. */
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1rem;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  background: var(--color-surface);
+  border: 1px solid var(--color-sand-200);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 4px 16px var(--color-shadow-card);
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.logo {
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-wood-950);
+}
+
+.body {
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-wood-600);
+}
+
+.shareIcon {
+  display: inline;
+  vertical-align: text-bottom;
+}
+
+.close {
+  display: flex;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-wood-400);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--color-sand-100);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.actions button {
+  padding-inline: 0.75rem;
+}

@@ -1,5 +1,6 @@
 import { Redirect, Route, Switch } from "wouter";
 import { BottomNav } from "@/components/bottom-nav";
+import { InstallBanner } from "@/components/install-banner";
 import { ProtectedRoute } from "@/components/protected-route";
 import CapturePage from "@/pages/capture";
 import DashboardPage from "@/pages/dashboard";
@@ -49,6 +50,7 @@ export function App() {
         <Route component={NotFoundPage} />
       </Switch>
       <BottomNav />
+      <InstallBanner />
     </>
   );
 }
