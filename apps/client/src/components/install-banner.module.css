@@ -1,5 +1,4 @@
-/* Layout lives here (not Tailwind utilities): the unlayered global reset in globals.css
-   would override Tailwind's padding/margin utilities. */
+/* Banner layout. */
 .banner {
   position: fixed;
   top: 0;
@@ -73,8 +72,4 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-}
-
-.actions button {
-  padding-inline: 0.75rem;
 }
