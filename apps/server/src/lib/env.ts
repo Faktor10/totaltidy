@@ -68,6 +68,20 @@ export function hasEmailAuth(): boolean {
  * environments only — never available once NODE_ENV=production.
  */
 export function hasDevLogin(): boolean {
-  console.log("SERVER", env.isProduction);
   return !env.isProduction;
+}
+
+/**
+ * Fails fast on a misconfigured production host. On Railway a missing
+ * NODE_ENV=production would leave the dev-login route open, skip serving the
+ * built client and issue non-secure cookies, so refuse to boot instead.
+ */
+export function assertDeploymentConfig(): void {
+  const onRailway = Boolean(process.env.RAILWAY_ENVIRONMENT_NAME ?? process.env.RAILWAY_PROJECT_ID);
+  if (onRailway && !env.isProduction) {
+    throw new Error("NODE_ENV must be set to 'production' on Railway");
+  }
+  if (env.isProduction && !process.env.SERVER_URL) {
+    throw new Error("SERVER_URL must be set in production (OAuth + Cloudinary webhook URLs)");
+  }
 }
